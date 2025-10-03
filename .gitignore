@@ -1,0 +1,9 @@
+# Enforce LF for all text files
+* text=auto eol=lf
+
+# Specific rules (optional)
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
