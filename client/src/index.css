@@ -1,4 +1,15 @@
-:root {
+:root{
+  font-family: "Montserrat", "Helvetica Neue", sans-serif;
+  /* font-family: "Courier 10 Pitch", Courier, monospace;
+    font-family: "Open Sans", sans-serif; */
+}
+/* :root {
+  font-family: "Outfit", sans-serif;
+
+
+
+
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -65,4 +76,4 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
-}
+} */

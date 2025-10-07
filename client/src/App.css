@@ -1,4 +1,4 @@
-#root {
+/* #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
@@ -39,4 +39,73 @@
 
 .read-the-docs {
   color: #888;
+} */
+
+body, html {
+  margin: 0;
+  padding: 0;
+  /* background-color: black; */
+  scroll-behavior: smooth;
 }
+
+.p-toast{
+  margin-top: 32px;
+}
+
+/*#region Navbar */
+/* initial values  */
+.navbar-card{
+  overflow: visible;
+  z-index: 3;
+  position: sticky; 
+  top: 0;
+}
+
+.p-menubar{
+  top: 0;
+  z-index: 11; 
+  width: 100%;  
+  border-color: transparent;
+  position: relative;
+}
+
+.p-menubar,
+.p-submenu-list, 
+.p-submenu-list > .p-menuitem > .p-menuitem-content,
+.p-submenu-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text,
+.p-submenu-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon,
+
+.p-menubar-button ,.p-menubar-root-list,
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content,
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text,
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon 
+{
+  color: white;
+  /* background-color: #3F51B5; */
+  /* color: #3F51B5; */
+  background-color: black;
+}
+
+.p-menubar-button:focus{
+  box-shadow: 0 0 0 0.2rem #3F51B5;
+  /* box-shadow: 0 0 0 0.2rem #FB6FBB */
+}
+
+.p-menubar .p-menubar-root-list> .p-menuitem>:hover{
+  /* background-color: black; */
+}
+
+/* Hover effect for both text and icon */
+.p-menubar .p-menubar-button:hover,
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content:hover,
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text,
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-icon,
+.p-submenu-list, 
+.p-submenu-list > .p-menuitem > .p-menuitem-content:hover,
+.p-submenu-list > .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text,
+.p-submenu-list > .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-icon {
+  /* color: #FB6FBB; */
+  color: #3F51B5;
+  background: black;
+}
+/*#endregion Navbar */
