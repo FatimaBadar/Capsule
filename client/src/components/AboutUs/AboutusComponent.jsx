@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './AboutUs.css';
+import './Aboutus.css';
 
 const AboutUsComponent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
