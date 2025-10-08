@@ -1,0 +1,365 @@
+/* Reset and Base Styles */
+/* * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+ */
+
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--color-secondary);
+}
+
+/* Hero Section */
+.hero-section {
+  /* top: auto; */
+  position: relative;
+  min-height: 32vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+              url('/aboutus-hero.jpg') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* min-height: au; */
+}
+
+.hero-overlay {
+  width: 100%;
+  max-width: 1200px;
+  padding: 20% 24px;
+  text-align: center;
+}
+
+.hero-content h1 {
+  font-family: var(--font-secondary);
+  font-style: italic;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-white);
+  line-height: 1.4em;
+}
+
+/* Mission Section */
+.mission-section {
+  padding: 48px 24px;
+  background-color: var(--color-white);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.mission-grid {
+  display: grid;
+  gap: 36px;
+  margin-bottom: 48px;
+}
+
+.mission-header {
+  text-align: right;
+}
+
+.mission-header h2 {
+  font-family: var(--font-secondary);
+  font-style: italic;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  line-height: 1.3em;
+  margin-bottom: 10px;
+}
+
+.mission-header h3 {
+  font-family: var(--font-secondary);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  line-height: 1.3em;
+}
+
+.mission-content h3 {
+  font-family: var(--font-secondary);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 18px;
+}
+
+.info-card {
+  text-align: left;
+}
+
+.info-card h5 {
+  font-family: var(--font-secondary);
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 10px;
+}
+
+.info-card p {
+  color: var(--color-text);
+  line-height: 1.65;
+}
+
+.who-we-are {
+  border-top: 1px solid var(--color-border);
+  padding-top: 48px;
+}
+
+.who-we-are h2 {
+  font-family: var(--font-secondary);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 18px;
+}
+
+.team-info h3 {
+  font-family: var(--font-secondary);
+  font-style: italic;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 16px;
+}
+
+.team-info p {
+  color: var(--color-text);
+  line-height: 1.65;
+}
+
+/* Why Capsule Section */
+.why-section {
+  position: relative;
+  min-height: 55vh;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.75) 65%, transparent 100%),
+              url('/why-capsule.jpg') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  padding: 120px 24px;
+}
+
+.why-overlay {
+  max-width: 50%;
+}
+
+.why-content h2 {
+  font-family: var(--font-secondary);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 16px;
+}
+
+.why-content p {
+  color: var(--color-white);
+  line-height: 1.65;
+}
+
+/* Values Section */
+.values-section {
+  padding: 62px 24px 36px;
+  background-color: var(--color-white);
+}
+
+.values-section h2 {
+  font-family: var(--font-secondary);
+  font-style: italic;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 14px;
+}
+
+.values-content {
+  max-width: 95%;
+}
+
+.values-content h4 {
+  font-family: var(--font-secondary);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  line-height: 1.2em;
+  text-shadow: 0 0 100px rgba(0, 0, 0, 0.3);
+}
+
+/* Contact Section */
+.contact-section {
+  position: relative;
+  min-height: 50vh;
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.65) 0%),
+              url('/contactus.jpg') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 100px 24px;;
+}
+
+.contact-overlay {
+  max-width: 50%;
+}
+
+.contact-content h6 {
+  font-family: var(--font-secondary);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 10px;
+}
+
+.contact-content h2 {
+  font-family: var(--font-secondary);
+  font-style: italic;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 10px;
+}
+
+.contact-content p {
+  color: var(--color-white);
+  line-height: 1.65;
+  margin-bottom: 24px;
+}
+
+.shop-button {
+  background-color: transparent;
+  color: var(--color-white);
+  border: 2px solid var(--color-white);
+  padding: 13px 30px;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shop-button:hover {
+  background-color: var(--color-white);
+  color: var(--color-secondary);
+}
+
+/* Footer */
+.site-footer {
+  background-color: var(--color-light);
+  border-top: 1px solid var(--color-border);
+  padding: 20px 24px;
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.footer-content p {
+  color: var(--color-text);
+  font-size: 16px;
+}
+
+/* Scroll to Top Button */
+.scroll-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 2.1em;
+  height: 2.1em;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: 2px;
+  font-size: 15px;
+  cursor: pointer;
+  z-index: 999;
+  transition: opacity 0.3s;
+}
+
+.scroll-top:hover {
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (min-width: 922px) {
+  .desktop-nav {
+    display: block;
+  }
+
+  .mobile-menu-toggle {
+    display: none;
+  }
+
+  .hero-content h1 {
+    font-size: 36px;
+  }
+
+  .mission-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 72px;
+    padding: 72px 0;
+  }
+
+  .why-overlay {
+    max-width: 50%;
+  }
+
+  .contact-overlay {
+    max-width: 50%;
+  }
+}
+
+@media (min-width: 768px) {
+  .mission-section {
+    padding: 60px 24px;
+  }
+
+  .values-section {
+    padding: 72px 24px 46px;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-overlay {
+    padding: 35% 0;
+  }
+
+  .hero-content h1 {
+    font-size: 30px;
+  }
+
+  .mission-header {
+    text-align: left;
+  }
+
+  .why-section {
+    padding: 96px 24px;
+  }
+
+  .why-overlay,
+  .contact-overlay {
+    max-width: 100%;
+  }
+
+  .contact-section {
+    justify-content: center;
+  }
+}

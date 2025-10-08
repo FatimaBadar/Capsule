@@ -1,0 +1,49 @@
+/* Hero Section */
+.dashboard-hero-section {
+  /* top: auto; */
+  position: relative;
+  min-height: 32vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+              url('/dashboard-hero.png') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* min-height: au; */
+}
+
+.dashboard-hero-overlay {
+  width: 100%;
+  max-width: 1200px;
+  padding: 20% 24px;
+  text-align: center;
+}
+
+.dashboard-hero-content h1 {
+  font-family: var(--font-secondary);
+  font-style: italic;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-white);
+  line-height: 1.4em;
+}
+
+.dashboard-hero-content h3 {
+  font-family: var(--font-secondary);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-light);
+  line-height: 1.3em;
+
+    /* font-family: var(--font-secondary);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 18px; */
+}
+
+button{
+  font-family: var(--font-primary);
+  font-weight: 600;
+  background-color: #878787;
+}

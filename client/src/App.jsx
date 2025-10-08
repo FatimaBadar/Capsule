@@ -7,6 +7,9 @@ import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 import Signup from "./components/SignupComponent";
 import Login from "./components/LoginComponent";
+import AboutUs from "./pages/AboutUs";
+import Account from "./pages/Account";
+import DashboardComponent from "./components/Dashboard/DashboardComponent";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -19,8 +22,9 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/" element={<Home />} />
+          <Route path="/aboutus" element={<AboutUs />} />
+          <Route path="/account" element={<Account />} />
+          <Route path="/account/dashboard" element={<DashboardComponent />} />
           <Route path="/" element={<Home />} />
 
           {/* <Route path="/projects" element={<Projects />} /> */}

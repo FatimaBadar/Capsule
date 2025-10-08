@@ -155,7 +155,7 @@ const Signup = () => {
                   alignItems: "center",
                 }}
               >
-                <Avatar sx={{ m: 1, bgcolor: "#597FB5" }}>
+                <Avatar sx={{ m: 1, bgcolor: "#878787" }}>
                   <LockOutlinedIcon />
                 </Avatar>
                 <Typography
@@ -256,10 +256,10 @@ const Signup = () => {
                       mb: 2,
                       width: "100%",
                       display: "flex",
-                      backgroundColor: "#597FB5 !important",
+                      backgroundColor: "#878787 !important",
                       color: "#fff !important",
                       "&:hover": {
-                        backgroundColor: "#405D80 !important",
+                        backgroundColor: "#878787 !important",
                       },
                     }}
                   >
@@ -276,7 +276,7 @@ const Signup = () => {
                     textAlign="center"
                     sx={{
                       fontWeight: 600,
-                      color: "#597FB5",
+                      color: "#878787",
                       "&:hover": {
                         fontWeight: 500,
                       },

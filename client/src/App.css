@@ -41,71 +41,153 @@
   color: #888;
 } */
 
-body, html {
+body,
+html {
   margin: 0;
   padding: 0;
   /* background-color: black; */
   scroll-behavior: smooth;
 }
 
-.p-toast{
+:root {
+  --color-primary: #131313;
+  --color-secondary: #000000;
+  --color-text: rgba(0, 0, 0, 0.46);
+  --color-light: #f6f6f6;
+  --color-white: #ffffff;
+  --color-border: rgba(0, 0, 0, 0.14);
+  --font-primary: "Montserrat", sans-serif;
+  --font-secondary: "Cormorant Garamond", serif;
+
+  --ast-global-color-0: #131313; /* Primary dark */
+  --ast-global-color-1: #000000; /* Black/hover */
+  --ast-global-color-2: #000000; /* Headings */
+  --ast-global-color-3: rgba(0, 0, 0, 0.46); /* Text/body */
+  --ast-global-color-4: #f6f6f6; /* Light background */
+  --ast-global-color-5: #ffffff; /* White */
+  --ast-global-color-6: rgba(0, 0, 0, 0.14); /* Borders */
+  --ast-global-color-7: #000000; /* Footer/accents */
+  --ast-global-color-8: #878787; /* Gray */
+}
+
+body {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-text);
+  background-color: var(--color-light);
+}
+
+
+button, .p-button{
+  font-family: var(--font-primary);
+  font-weight: 600;
+  background-color: #878787;
+}
+
+.p-toast {
   margin-top: 32px;
 }
 
 /*#region Navbar */
 /* initial values  */
-.navbar-card{
+.navbar-card {
   overflow: visible;
   z-index: 3;
-  position: sticky; 
+  position: sticky;
   top: 0;
 }
 
-.p-menubar{
+.p-menubar {
   top: 0;
-  z-index: 11; 
-  width: 100%;  
-  border-color: transparent;
+  z-index: 11;
+  width: 100%;
+  /* border-color: transparent; */
+  border-color: #878787 0.9;
   position: relative;
 }
 
 .p-menubar,
-.p-submenu-list, 
+.p-submenu-list,
 .p-submenu-list > .p-menuitem > .p-menuitem-content,
-.p-submenu-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text,
-.p-submenu-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon,
-
-.p-menubar-button ,.p-menubar-root-list,
+.p-submenu-list
+  > .p-menuitem
+  > .p-menuitem-content
+  .p-menuitem-link
+  .p-menuitem-text,
+.p-submenu-list
+  > .p-menuitem
+  > .p-menuitem-content
+  .p-menuitem-link
+  .p-menuitem-icon,
+.p-menubar-button,
+.p-menubar-root-list,
 .p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content,
-.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text,
-.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon 
-{
-  color: white;
+.p-menubar
+  .p-menubar-root-list
+  > .p-menuitem
+  > .p-menuitem-content
+  .p-menuitem-link
+  .p-menuitem-text,
+.p-menubar
+  .p-menubar-root-list
+  > .p-menuitem
+  > .p-menuitem-content
+  .p-menuitem-link
+  .p-menuitem-icon {
+  color: #878787;
   /* background-color: #3F51B5; */
   /* color: #3F51B5; */
-  background-color: black;
+  /* background-color: black; */
+  background-color: #f6f6f6;
+
+  /* background-color: transparent; */
 }
 
-.p-menubar-button:focus{
-  box-shadow: 0 0 0 0.2rem #3F51B5;
+/* .p-menubar .p-menubar-root-list{
+    box-shadow: 0 0 0 0.1rem #8787874f;
+} */
+
+.p-menubar-button:focus {
+  box-shadow: 0 0 0 0.2rem #878787;
   /* box-shadow: 0 0 0 0.2rem #FB6FBB */
 }
 
-.p-menubar .p-menubar-root-list> .p-menuitem>:hover{
+.p-menubar .p-menubar-root-list > .p-menuitem > :hover {
   /* background-color: black; */
 }
 
 /* Hover effect for both text and icon */
 .p-menubar .p-menubar-button:hover,
 .p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content:hover,
-.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text,
-.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-icon,
-.p-submenu-list, 
+.p-menubar
+  .p-menubar-root-list
+  > .p-menuitem
+  > .p-menuitem-content:hover
+  .p-menuitem-link
+  .p-menuitem-text,
+.p-menubar
+  .p-menubar-root-list
+  > .p-menuitem
+  > .p-menuitem-content:hover
+  .p-menuitem-link
+  .p-menuitem-icon,
+.p-submenu-list,
 .p-submenu-list > .p-menuitem > .p-menuitem-content:hover,
-.p-submenu-list > .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text,
-.p-submenu-list > .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-icon {
+.p-submenu-list
+  > .p-menuitem
+  > .p-menuitem-content:hover
+  .p-menuitem-link
+  .p-menuitem-text,
+.p-submenu-list
+  > .p-menuitem
+  > .p-menuitem-content:hover
+  .p-menubar-content:focus
+  .p-menuitem-link
+  .p-menuitem-icon {
   /* color: #FB6FBB; */
-  color: #3F51B5;
-  background: black;
+  color: #f6f6f6;
+  background: #8787874f;
 }
 /*#endregion Navbar */
