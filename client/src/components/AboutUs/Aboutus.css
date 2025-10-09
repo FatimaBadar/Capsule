@@ -28,13 +28,18 @@ a:hover {
   /* top: auto; */
   position: relative;
   min-height: 32vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-              url('/aboutus-hero.jpg') center/cover no-repeat;
+  /* background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+              url('/aboutus-hero.jpg') center/cover no-repeat; */
   display: flex;
   align-items: center;
   justify-content: center;
 
   /* min-height: au; */
+}
+
+.about-hero{
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+              url('/aboutus-hero.jpg') center/cover no-repeat;
 }
 
 .hero-overlay {

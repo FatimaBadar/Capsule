@@ -19,7 +19,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/aboutus" element={<AboutUs />} />
           <Route path="/account" element={<Account />} />
-          <Route path="/account/dashboard" element={<DashboardComponent />} />
+          {/* <Route path="/account/dashboard" element={<DashboardComponent />} /> */}
           {/* <Route path="/projects" element={<Projects />} /> */}
         </Routes>
       </BrowserRouter>

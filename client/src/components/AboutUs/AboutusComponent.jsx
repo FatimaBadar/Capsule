@@ -23,7 +23,7 @@ const AboutUsComponent = () => {
 
     {/* <div className="aboutus-page"> */}
       {/* Hero Section */}
-      <section className="hero-section">
+      <section className="hero-section about-hero">
         <div className="hero-overlay">
           <div className="hero-content">
             <h1>About Us</h1>
