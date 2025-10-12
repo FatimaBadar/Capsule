@@ -132,14 +132,14 @@ export const analyzeClothingWithAI = async (imageBuffer) => {
   }
 };
 
-export const generateOutfit = async (imageBuffer) => {
+export const generateOutfit = async (imageDescription) => {
   try {
-    const prompt = await describeClothing(imageBuffer);
+    // const prompt = await describeClothing(imageBuffer);
 
     const result = await client.textToImage({
       provider: "fal-ai",
       model: "tryonlabs/FLUX.1-dev-LoRA-Outfit-Generator",
-      inputs: prompt,
+      inputs: imageDescription.description,
       parameters: { num_inference_steps: 5 },
     });
 

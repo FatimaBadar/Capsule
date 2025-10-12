@@ -16,10 +16,9 @@ import {
   Chip,
 } from "@mui/material";
 import axios from "axios";
-import { Messages } from "primereact/messages";
+import { Messages} from "primereact/messages";
 import { FileUpload } from "primereact/fileupload";
 import { uploadService } from "../../services/clothingService";
-import { use } from "react";
 
 const API_URL = "http://localhost:3000/api/clothes";
 // export default function
@@ -172,7 +171,7 @@ const UploadComponent = ({ onOpenUpload }) => {
         setLoader(false);
         setSuccess(true);
         setMessage("New item successfully added!");
-        setTimeout(() => closeUploadModal(), 2000);
+        // setTimeout(() => closeUploadModal(), 2000);
         // if (onUploadSuccess) onUploadSuccess(response.data.item);
         // setTimeout(() => closeUploadModal(), 2000);
       }
@@ -456,7 +455,6 @@ const UploadComponent = ({ onOpenUpload }) => {
                     // ? "✅ Already Saved!"
                     "💾 Save to Wardrobe"}
               </Button>
-
               {success && <Messages severity="success" text={message} />}
               {failure && <Messages severity="error" text={message} />}
             </Box>

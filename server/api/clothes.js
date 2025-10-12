@@ -1,6 +1,10 @@
 import multer from "multer";
 import { Router } from "express";
 import Clothes from "../models/clothes.js";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
+import slugify from "slugify";
 import {
   analyzeClothingWithAI,
   generateOutfit,
@@ -8,11 +12,33 @@ import {
 
 const router = Router();
 
+// const upload = multer({
+//   storage: multer.diskStorage({
+//     destination: "uploads/",
+//     filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+//   }),
+// });
+
+// Multer setup with safe unique filenames
 const upload = multer({
   storage: multer.diskStorage({
     destination: "uploads/",
-    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+    filename: (req, file, cb) => {
+      const safeName = slugify(file.originalname, {
+        lower: true,
+        strict: true,
+      });
+      const uniqueName = `${uuidv4()}-${safeName}`;
+      cb(null, uniqueName);
+    },
   }),
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed!"), false);
+    }
+    cb(null, true);
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
 });
 
 // Analyze clothing via AI
@@ -39,9 +65,11 @@ router.post(
     try {
       const { title, description, fabric, category, seasonType, color, user } =
         req.body;
-
-      // Optional: store image buffer or URL if you want
-      const imageUrl = req.file ? `/uploads/${req.file.originalname}` : "";
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file uploaded" });
+      }
+      const filePath = path.join("uploads", req.file.filename);
+      const imageData = fs.readFileSync(filePath);
 
       const newClothing = new Clothes({
         title,
@@ -51,11 +79,20 @@ router.post(
         seasonType,
         color,
         user,
-        imageUrl,
+        imageUrl: `/uploads/${req.file.filename}`, //public url
+        image: {
+          data: imageData, //blob
+          contentType: req.file.mimetype,
+        },
         createdAt: new Date(),
       });
 
       const savedItem = await newClothing.save();
+
+      //  Delete the old temporary file if renamed already
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
 
       res.json({
         statusCode: 200,
@@ -74,10 +111,29 @@ router.post(
 router.get("/get-all-clothes", async (req, res) => {
   try {
     const allClothes = await Clothes.find().sort({ createdAt: -1 });
-    res.json({
-      statusCode: 200,
-      items: allClothes,
-    });
+
+const itemsWithImages = allClothes.map(item => {
+  let base64Image = null;
+  if (item.image?.data) {
+    // Convert Mongoose buffer to base64 string
+    base64Image = `data:${item.image.contentType};base64,${Buffer.from(item.image.data).toString("base64")}`;
+  }
+
+  return {
+    id: item._id,
+    title: item.title,
+    description: item.description,
+    fabric: item.fabric,
+    category: item.category,
+    seasonType: item.seasonType,
+    color: item.color,
+    user: item.user,
+    createdAt: item.createdAt,
+    imageUrl: item.imageUrl,
+    imageBase64: base64Image,
+  };
+});
+    res.json({ statusCode: 200, items: itemsWithImages });
   } catch (err) {
     console.error(err);
     res
@@ -104,12 +160,12 @@ router.get("/generate-outfits", async (req, res) => {
 
         // Ensure result is an array and has url
         const imageUrl =
-          Array.isArray(result) && result[0]?.url ? result[0].url : "";
-        outfitResults.push({
-          id: item.id,
-          title: item.title,
-          imageUrl,
-        });
+          // Array.isArray(result) && result[0]?.url ? result[0].url : "";
+          outfitResults.push({
+            id: item.id,
+            title: item.title,
+            imageUrl: item.imageUrl,
+          });
       } catch (err) {
         console.error(`Failed for item ${item.id}:`, err.message);
       }

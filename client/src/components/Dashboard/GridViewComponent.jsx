@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "primereact/button";
+import { Container, CircularProgress } from "@mui/material";
 import { DataView, DataViewLayoutOptions } from "primereact/dataview";
-import { Rating } from "primereact/rating";
-import { Tag } from "primereact/tag";
-import { classNames } from "primereact/utils";
 import { getAllClothes } from "../../services/clothingService";
 import axios from "axios";
 const API_URL = "http://localhost:3000/api/clothes";
@@ -11,6 +9,8 @@ const API_URL = "http://localhost:3000/api/clothes";
 export default function GridViewComponent() {
   const [loader, setLoader] = useState(false);
   const [clothes, setClothes] = useState([]);
+  const [layout, setLayout] = useState("grid");
+  const [imageBase64, setImageBase64] = useState("");
 
   // const [clothes, setClothes] = useState([
   //   {
@@ -26,46 +26,26 @@ export default function GridViewComponent() {
   //     rating: 5,
   //   },
   // ]);
-  const [layout, setLayout] = useState("grid");
 
   useEffect(() => {
-    try {
-      setLoader(true);
-
-      // const response = getAllClothes(tempClothesData);
-
-      const response = fetchAllClothes();
-      console.log("Response:", response);
-
-      if (response.statusCode == "200") {
-        setLoader(false);
-        // setClothes(response.items);
-      } else {
+    const fetchAllClothes = async () => {
+      try {
+        setLoader(true);
+        console.log("Fetching all clothes...");
+        const response = await axios.get(`${API_URL}/get-all-clothes`);
+        if (response.data.statusCode === 200) {
+          console.log("All clothes:", response.data.items);
+          setClothes(response.data.items);
+        }
+      } catch (err) {
+        console.error("Failed to fetch clothes:", err);
+      } finally {
         setLoader(false);
       }
+    };
 
-      setClothes("");
-    } catch (error) {
-      setLoader(false);
-    }
-
-    // ClothingService.getAllClothes().then((data) => setclothes(data.slice(0, 12)));
+    fetchAllClothes();
   }, []);
-
-  const fetchAllClothes = async () => {
-  try {
-    console.log("Fetching all clothes...");
-    const response = await axios.get(`${API_URL}/get-all-clothes`);
-    if (response.data.statusCode === 200) {
-      console.log("All clothes:", response.data.items);
-      // Save in state to render list
-      setClothes(response.data.items);
-    }
-  } catch (err) {
-    console.error("Failed to fetch clothes:", err);
-  }
-};
-
 
   const getSeverity = (clothes) => {
     switch (clothes.inventoryStatus) {
@@ -83,27 +63,23 @@ export default function GridViewComponent() {
     }
   };
 
-  const gridItem = (clothes) => {
+  const gridItem = (item) => {
     return (
-      <div className="col-12 sm:col-6 lg:col-12 xl:col-4 p-2" key={clothes.id}>
-        <div className="p-4 border-1 surface-border surface-card border-round">
+      <div className="col-12 sm:col-6 lg:col-12 xl:col-4 p-2" key={item._id}>
+        <div className="p-2 border-1 surface-border surface-card border-round">
           <div className="flex flex-wrap align-items-center justify-content-between gap-2">
             <div className="flex align-items-center gap-2">
               <i className="pi pi-tag"></i>
-              <span className="font-semibold">{clothes.category}</span>
+              <span className="font-semibold">{item.category.toUpperCase()}</span>
             </div>
-            {/* <Tag
-              value={clothes.inventoryStatus}
-              severity={getSeverity(clothes)}
-            ></Tag> */}
           </div>
-          <div className="flex flex-column align-items-center gap-3 py-5">
-            <img
-              className="w-9 shadow-2 border-round"
-              src={`../../../../server/uploads/${clothes._id}`}
-              alt={clothes.title}
-            />
-            <div className="text-2xl font-bold">{clothes.title}</div>
+          <div className="flex flex-column align-items-center gap-3">
+               <img
+                src={item.imageBase64 ? item.imageBase64 : item.imageUrl} 
+                alt={item.title}
+                className="w-5 shadow-2 border-round"
+              /> 
+              <div className="text-2xl font-bold">{item.title}</div>
           </div>
         </div>
       </div>
@@ -117,10 +93,19 @@ export default function GridViewComponent() {
     return gridItem(clothes);
   };
 
-  const listTemplate = (clothes) => {
+  // const listTemplate = (items) => {
+  //   return (
+  //     <div className="grid grid-nogutter">
+  //               {items.map((item) => gridItem(item))}
+
+  //       {/* {items.map((item, index) => itemTemplate(item, index))} */}
+  //     </div>
+  //   );
+  // };
+  const listTemplate = (items) => {
     return (
       <div className="grid grid-nogutter">
-        {clothes.map((clothes, index) => itemTemplate(clothes, index))}
+        {items.map((item) => gridItem(item))}
       </div>
     );
   };

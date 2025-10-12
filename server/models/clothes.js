@@ -10,6 +10,7 @@ const clothesSchema = new mongoose.Schema({
   color: { type: String, default: "" },
   user: { type: String, default: "default" },
   imageUrl: { type: String, default: "" },
+  image: { data: Buffer, contentType: String },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -33,12 +33,14 @@ mongoose.connect(process.env.ATLAS_URL).then(() => {
 });
 
 
-// Fix for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Serve uploaded files statically
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+// 👇 Correct path if uploads is inside /server
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API routes
 app.use('/api/clothes', clothesRouter);
