@@ -19,6 +19,7 @@ export async function uploadService(clothesPayload){
 
 export async function getAllClothes(user){
     const response = await api.get('/api/clothes/getAllClothes', {user});
+
     return response.data;
 }
 

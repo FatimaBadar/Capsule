@@ -37,11 +37,10 @@ mongoose.connect(process.env.ATLAS_URL).then(() => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Serve uploaded files statically
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-//API Routes
-// app.use('/api/requirements', requirementsRouter);
+// API routes
 app.use('/api/clothes', clothesRouter);
 
 // app.use('/api/ui', uiRouter);

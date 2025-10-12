@@ -15,8 +15,9 @@ const clothesSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['shirt', 'pants', 'jeans', 'skirt', 'coat', 'jacket', 'dress', 
-           't-shirt', 'shorts', 'sweater', 'hoodie', 'blouse', 'suit', 'other'],
-    lowercase: true
+           't-shirt', 'shorts', 'sweater', 'hoodie', 'blouse', 'suit', 'other', 'unknown'],
+    lowercase: true,
+    default: 'other'
   },
   fabric: {
     type: String,

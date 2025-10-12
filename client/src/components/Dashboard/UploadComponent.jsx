@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Dashboard.css";
 
 import {
@@ -12,78 +12,175 @@ import {
   MenuItem,
   FormControl,
   Select,
+  Alert,
+  Chip,
 } from "@mui/material";
-
-import { Button as PrimeButton } from "primereact/button";
+import axios from "axios";
 import { Messages } from "primereact/messages";
 import { FileUpload } from "primereact/fileupload";
 import { uploadService } from "../../services/clothingService";
+import { use } from "react";
 
+const API_URL = "http://localhost:3000/api/clothes";
 // export default function
 const UploadComponent = ({ onOpenUpload }) => {
-  const [imageFile, setImageFile] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [fabric, setFabric] = useState("");
   const [category, setCategory] = useState("");
   const [seasonType, setSeasonType] = useState("");
-
-  // const [openUpload, setOpenUpload] = useState(true);
-
+  const [color, setColor] = useState("");
   const [loader, setLoader] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [failure, setFailure] = useState(false);
-  const [message, setMessage] = useState("");
 
-  const closeUploadModal = () => onOpenUpload(false);
+  useEffect(() => {
+    const tempClothes = localStorage.getItem("newTempClothes");
+    const tempClothesImage = localStorage.getItem("newTempClothesImage");
+
+    if (tempClothes) {
+      const aiItem = JSON.parse(tempClothes);
+      const aiImage = JSON.parse(tempClothesImage);
+
+
+      setImageFile(aiImage);
+      setAiAnalysis(aiItem);
+      setTitle(aiItem.title || "");
+      setDescription(aiItem.description || "");
+      setCategory(aiItem.category || "");
+      setFabric(aiItem.fabric || "");
+      setColor(aiItem.color || "");
+      setSeasonType(aiItem.seasonType || "");
+    } 
+    // return () => {
+    //   localStorage.removeItem("newTempClothes");
+    // }
+  }, []);
+
+  const resetForm = () => {
+    setImageFile(null);
+    setPreviewUrl("");
+    setTitle("");
+    setDescription("");
+    setFabric("");
+    setCategory("");
+    setSeasonType("");
+    setColor("");
+    setAiAnalysis(null);
+    setSuccess(false);
+    setFailure(false);
+    setMessage("");
+  };
+
+  const closeUploadModal = () => {
+    onOpenUpload(false);
+    resetForm();
+  };
+
+  // Trigger AI analysis on file select
+  const handleFileSelect = async (e) => {
+    const file = e.files[0];
+    if (!file) return;
+
+    setImageFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setAiAnalysis(null);
+    setSuccess(false);
+    setFailure(false);
+
+    await analyzeWithAI(file);
+  };
+
+  const analyzeWithAI = async (file) => {
+    setAnalyzing(true);
+    setMessage("🤖 AI is analyzing your clothing...");
+
+    const formData = new FormData();
+    formData.append("imageFile", file);
+
+    try {
+      const response = await axios.post(`${API_URL}/analyze-ai`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (response.data.statusCode === 200 || response.data.statusCode === "200") {
+        const aiItem = response.data.item;
+        setAiAnalysis(aiItem);
+
+        // Auto-fill fields 
+        setTitle(aiItem.title || "");
+        setDescription(aiItem.description || "");
+        setCategory(aiItem.category || "");
+        setFabric(aiItem.fabric || "");
+        setColor(aiItem.color || "");
+        setSeasonType(aiItem.seasonType || "");
+
+        localStorage.setItem("newTempClothes", JSON.stringify(aiItem));
+        localStorage.setItem("newTempClothesImage", JSON.stringify(imageFile));
+
+        setMessage("✅ AI Analysis Complete! Outfit generated.");
+        setSuccess(true);
+      }
+    } catch (error) {
+      console.error("AI Analysis error:", error);
+      setMessage("⚠️ AI analysis failed. Please fill details manually.");
+      setFailure(true);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const submitUploadClothes = async (e) => {
     e.preventDefault();
-    const tempClothesData = {
-      imageFile,
-      title,
-      description,
-      fabric,
-      category,
-      seasonType,
-      user: localStorage.getItem("user"),
-    };
+    if (!imageFile) {
+      setMessage("Please select an image file.");
+      setFailure(true);
+      return;
+    }
+
+    setLoader(true);
+    const formData = new FormData();
+    formData.append("imageFile", imageFile);
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("fabric", fabric);
+    formData.append("category", category);
+    formData.append("seasonType", seasonType);
+    formData.append("color", color);
+    formData.append("user", localStorage.getItem("user") || "default");
 
     try {
-      setLoader(true);
+      const response = await axios.post(
+        `${API_URL}/upload-clothing`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
-      const response = await uploadService(tempClothesData);
-
-      if (response.statusCode == "200") {
+      if (response.data.statusCode === "200") {
         setLoader(false);
         setSuccess(true);
-        setMessage("New Item successfully added!");
-      } else {
-        setLoader(false);
-        setFailure(true);
-        setMessage("Could not add new item. Please add valid details..");
+        setMessage("New item successfully added!");
+        if (onUploadSuccess) onUploadSuccess(response.data.item);
+        setTimeout(() => closeUploadModal(), 2000);
       }
-
-      setImageFile("");
-      setTitle("");
-      setDescription("");
-      setFabric("");
-      setCategory("");
-      setSeasonType("");
     } catch (error) {
+      console.error(error);
       setLoader(false);
       setFailure(true);
-      setMessage("Could not add new item. Please add valid details..");
+      setMessage("Could not add new item. Please try again.");
     }
   };
 
   const onChange = (e) => {
     const { name, value } = e.target;
-
     switch (name) {
-      case "imageFile":
-        setImageFile(value);
-        break;
       case "title":
         setTitle(value);
         break;
@@ -98,6 +195,9 @@ const UploadComponent = ({ onOpenUpload }) => {
         break;
       case "description":
         setDescription(value);
+        break;
+      case "color":
+        setColor(value);
         break;
       default:
         break;
@@ -115,21 +215,6 @@ const UploadComponent = ({ onOpenUpload }) => {
         </Container>
       ) : (
         <>
-          {/* <Box
-            // container
-            // component={Paper}
-            // elevation={24}
-            // square={false}
-            sx={{
-              m: "auto",
-              mt: 10,
-              mb: 10,
-              p: 3,
-              width: "50%",
-              borderRadius: "10px",
-              boxShadow: "0 6px 10px 0 rgba(0, 0, 0, 0.37)",
-            }}
-          > */}
           <Box
             sx={{
               my: 8,
@@ -139,19 +224,11 @@ const UploadComponent = ({ onOpenUpload }) => {
               alignItems: "center",
             }}
           >
-            {/* <Avatar sx={{ m: 1, bgcolor: "#597FB5" }}>
-                <LockOutlinedIcon />
-              </Avatar> 
-              */}
-            {/* <Typography component="h1" variant="h5" sx={{ fontWeight: 700 }}>
-
-              </Typography> */}
             <Box
               component="form"
               onSubmit={submitUploadClothes}
               sx={{
                 width: "80%",
-                // width: '360px',
                 mt: 3,
                 textAlign: "center",
               }}
@@ -168,16 +245,80 @@ const UploadComponent = ({ onOpenUpload }) => {
                 }}
                 onClick={closeUploadModal}
               ></i>
+
+              <h2 style={{ marginBottom: "20px" }}>Upload New Clothing</h2>
+
+              {/* AI Analysis Status */}
+              {analyzing && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <CircularProgress size={20} />
+                    <span>🤖 AI is analyzing your clothing...</span>
+                  </div>
+                </Alert>
+              )}
+
+              {/* Image Preview */}
+              {previewUrl && (
+                <Box sx={{ mb: 3, textAlign: "center" }}>
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "300px",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* AI Analysis Results */}
+              {aiAnalysis && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  <strong>🎯 AI Analysis Complete!</strong>
+                  <Box
+                    sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}
+                  >
+                    <Chip
+                      label={`Category: ${aiAnalysis.category}`}
+                      color="primary"
+                      size="small"
+                    />
+                    {aiAnalysis.color && (
+                      <Chip
+                        label={`Color: ${aiAnalysis.color}`}
+                        color="secondary"
+                        size="small"
+                      />
+                    )}
+                    <Chip
+                      label={`Season: ${aiAnalysis.seasonType}`}
+                      color="info"
+                      size="small"
+                    />
+                  </Box>
+                </Alert>
+              )}
+
               <FileUpload
-                mode="basic"
                 id="imageFile"
+                mode="basic"
                 name="imageFile"
-                value={imageFile}
-                onChange={(e) => setImageFile(e.target.files[0])}
                 accept="image/*"
-                maxFileSize={1000000}
-                auto
-                chooseLabel="Upload Image"
+                maxFileSize={10000000}
+                onSelect={handleFileSelect}
+                chooseLabel="Upload Image for AI Analysis"
+                disabled={analyzing}
+                auto={false}
+                style={{ marginBottom: "20px" }}
               />
 
               <TextField
@@ -192,6 +333,7 @@ const UploadComponent = ({ onOpenUpload }) => {
                 value={title}
                 onChange={onChange}
                 sx={{ display: "flex" }}
+                disabled={!imageFile || analyzing}
               />
 
               <FormControl fullWidth variant="outlined" margin="normal">
@@ -205,6 +347,7 @@ const UploadComponent = ({ onOpenUpload }) => {
                   id="category"
                   label="Category"
                   sx={{ display: "flex", textAlign: "left" }}
+                  disabled={!imageFile || analyzing}
                 >
                   <MenuItem value={"shirt"}>Shirt</MenuItem>
                   <MenuItem value={"pants"}>Pants</MenuItem>
@@ -223,6 +366,18 @@ const UploadComponent = ({ onOpenUpload }) => {
                 </Select>
               </FormControl>
 
+              <TextField
+                margin="normal"
+                name="color"
+                label="Color"
+                type="text"
+                value={color}
+                onChange={onChange}
+                placeholder="e.g., Blue, Red, Black"
+                sx={{ display: "flex" }}
+                disabled={!imageFile || analyzing}
+              />
+
               <FormControl fullWidth variant="outlined" margin="normal">
                 <InputLabel>Season Type</InputLabel>
                 <Select
@@ -234,9 +389,12 @@ const UploadComponent = ({ onOpenUpload }) => {
                   id="seasonType"
                   label="seasonType"
                   sx={{ display: "flex", textAlign: "left" }}
+                  disabled={!imageFile || analyzing}
                 >
+                  <MenuItem value={"all-season"}>All Seasons</MenuItem>
+
                   <MenuItem value={"summer"}>Summer</MenuItem>
-                  <MenuItem value={"pants"}>Winter</MenuItem>
+                  <MenuItem value={"winter"}>Winter</MenuItem>
                   <MenuItem value={"spring"}>Spring</MenuItem>
                   <MenuItem value={"autumn"}>Autumn</MenuItem>
                 </Select>
@@ -252,6 +410,7 @@ const UploadComponent = ({ onOpenUpload }) => {
                 value={fabric}
                 onChange={onChange}
                 sx={{ display: "flex" }}
+                disabled={!imageFile || analyzing}
               />
 
               <TextField
@@ -264,20 +423,9 @@ const UploadComponent = ({ onOpenUpload }) => {
                 value={description}
                 onChange={onChange}
                 sx={{ display: "flex" }}
+                disabled={!imageFile || analyzing}
               />
-              {/* <TextareaAutosize
-                aria-label="minimum height"
-                minRows={5}
-                margin="normal"
-                name="description"
-                label="Description"
-                type="text"
-                id="description"
-                autoComplete="description"
-                value={description}
-                onChange={onChange}
-                sx={{ display: "flex", width: "100%" }}
-              /> */}
+
               <Button
                 type="submit"
                 fullWidth
@@ -294,8 +442,13 @@ const UploadComponent = ({ onOpenUpload }) => {
                     backgroundColor: "#878787 !important",
                   },
                 }}
+                disabled={!imageFile || analyzing}
               >
-                Upload Clothes
+                {analyzing
+                  ? "🔄 Analyzing with AI..."
+                  // : aiAnalysis
+                  // ? "✅ Already Saved!"
+                  : "💾 Save to Wardrobe"}
               </Button>
 
               {success && <Messages severity="success" text={message} />}
