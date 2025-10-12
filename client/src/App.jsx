@@ -7,7 +7,7 @@ import Login from "./components/LoginComponent";
 import AboutUs from "./pages/AboutUs";
 import Account from "./pages/Account";
 import DashboardComponent from "./components/Dashboard/DashboardComponent";
-
+import Outfits from "./pages/Outfits";
 function App() {
   return (
     <>
@@ -20,6 +20,8 @@ function App() {
           <Route path="/aboutus" element={<AboutUs />} />
           <Route path="/account" element={<Account />} />
           <Route path="/account/dashboard" element={<DashboardComponent />} />
+          <Route path="/outfits" element={<Outfits />} />
+
           {/* <Route path="/projects" element={<Projects />} /> */}
         </Routes>
       </BrowserRouter>

@@ -32,9 +32,13 @@ router.post("/analyze-ai", upload.single("imageFile"), async (req, res) => {
   }
 });
 
-router.post("/upload-clothing", upload.single("imageFile"), async (req, res) => {
+router.post(
+  "/upload-clothing",
+  upload.single("imageFile"),
+  async (req, res) => {
     try {
-      const { title, description, fabric, category, seasonType, color, user } =  req.body;
+      const { title, description, fabric, category, seasonType, color, user } =
+        req.body;
 
       // Optional: store image buffer or URL if you want
       const imageUrl = req.file ? `/uploads/${req.file.originalname}` : "";
@@ -82,25 +86,40 @@ router.get("/get-all-clothes", async (req, res) => {
   }
 });
 
-// Generate Outfit Only
-router.post(
-  "/generate-outfit",
-  upload.single("imageFile"),
-  async (req, res) => {
-    try {
-      if (!req.file)
-        return res.status(400).json({ message: "No file uploaded" });
+router.get("/generate-outfits", async (req, res) => {
+  try {
+    const clothes = await Clothes.find().sort({ createdAt: -1 });
 
-      const outfitImage = await generateOutfit(
-        req.file.buffer,
-        req.file.mimetype
-      );
-      res.json({ outfitImage });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: err.message });
+    if (!clothes || clothes.length === 0) {
+      return res.status(404).json({ message: "No clothes found" });
     }
+
+    const outfitResults = [];
+
+    for (let item of clothes) {
+      if (!item.description) continue;
+
+      try {
+        const result = await generateOutfit({ description: item.description });
+
+        // Ensure result is an array and has url
+        const imageUrl =
+          Array.isArray(result) && result[0]?.url ? result[0].url : "";
+        outfitResults.push({
+          id: item.id,
+          title: item.title,
+          imageUrl,
+        });
+      } catch (err) {
+        console.error(`Failed for item ${item.id}:`, err.message);
+      }
+    }
+
+    res.json(outfitResults);
+  } catch (err) {
+    console.error("Generate outfits API failed:", err);
+    res.status(500).json({ message: "Failed to generate outfits" });
   }
-);
+});
 
 export default router;
