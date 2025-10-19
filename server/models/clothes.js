@@ -15,12 +15,12 @@ const clothesSchema = new mongoose.Schema({
   description: { type: String, default: "" },
   fabric: { type: String, default: "" },
   category: { 
-    type: String, 
+    type: [String], 
     required: true,
     enum: ['top', 'bottom', 'shoes', 'accessories', 'shirt', 'pants', 'jeans', 'skirt', 'coat', 'jacket', 'dress', 't-shirt', 'shorts', 'sweater', 'hoodie', 'blouse', 'suit', 'other']
   },
   seasonType: { 
-    type: String, 
+    type: [String], 
     default: "",
     enum: ['summer', 'winter', 'spring', 'fall', 'autumn', 'all-season']
   },
@@ -28,7 +28,7 @@ const clothesSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  style: { type: String }, // casual, formal, sporty, etc.
+  style: { type: [String] }, // casual, formal, sporty, etc.
   occasion: { type: String }, // work, party, casual, etc.
   weather: { type: String }, // summer, winter, spring, fall
   tags: [String],

@@ -14,9 +14,10 @@ import {
   Select,
   Alert,
   Chip,
+  easing,
 } from "@mui/material";
 import axios from "axios";
-import { Messages} from "primereact/messages";
+import { Messages } from "primereact/messages";
 import { FileUpload } from "primereact/fileupload";
 import { uploadService } from "../../services/clothingService";
 
@@ -30,11 +31,11 @@ const UploadComponent = ({ onOpenUpload }) => {
   const [description, setDescription] = useState("");
   const [fabric, setFabric] = useState("");
   const [category, setCategory] = useState("");
-  const [seasonType, setSeasonType] = useState("");
+  const [seasonType, setSeasonType] = useState([""]);
   const [color, setColor] = useState("");
-  const [style, setStyle] = useState("");
+  const [style, setStyle] = useState([""]);
   const [customStyle, setCustomStyle] = useState("");
-  const [occasion, setOccasion] = useState("");
+  const [occasion, setOccasion] = useState([""]);
   const [customOccasion, setCustomOccasion] = useState("");
   // const [weather, setWeather] = useState("");
   // const [tags, setTags] = useState("");
@@ -157,7 +158,7 @@ const UploadComponent = ({ onOpenUpload }) => {
 
   const submitUploadClothes = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!imageFile) {
       showMessage("Please select an image file.", "error");
@@ -187,7 +188,10 @@ const UploadComponent = ({ onOpenUpload }) => {
     formData.append("seasonType", seasonType);
     formData.append("color", color);
     formData.append("style", style === "other" ? customStyle : style);
-    formData.append("occasion", occasion === "other" ? customOccasion : occasion);
+    formData.append(
+      "occasion",
+      occasion === "other" ? customOccasion : occasion
+    );
     // formData.append("weather", weather);
     // formData.append("tags", tags);
     formData.append("user", localStorage.getItem("user") || "default");
@@ -213,7 +217,8 @@ const UploadComponent = ({ onOpenUpload }) => {
     } catch (error) {
       console.error("Upload error:", error);
       showMessage(
-        error.response?.data?.message || "Could not add new item. Please try again.",
+        error.response?.data?.message ||
+          "Could not add new item. Please try again.",
         "error"
       );
     } finally {
@@ -267,6 +272,21 @@ const UploadComponent = ({ onOpenUpload }) => {
         break;
     }
   };
+  const handleOccasionChange = (event) => {
+    const value = event.target.value;
+    setOccasion(value);
+  };
+
+  const handleStyleChange = (event) => {
+    const value = event.target.value;
+    setStyle(value);
+  };
+
+  const handleSeasonTypeChange = (event) => {
+    const value = event.target.value;
+    setSeasonType(value);
+  };
+
 
   return (
     <>
@@ -447,10 +467,12 @@ const UploadComponent = ({ onOpenUpload }) => {
                 <Select
                   required
                   name="seasonType"
-                  value={seasonType}
+                  // value={seasonType}
                   autoComplete="seasonType"
-                  onChange={onChange}
-                  id="seasonType"
+                  // onChange={onChange}
+
+                  value={Array.isArray(seasonType) ? seasonType[0] : seasonType}
+                  onChange={handleSeasonTypeChange}                  id="seasonType"
                   label="seasonType"
                   sx={{ display: "flex", textAlign: "left" }}
                   // disabled={!imageFile || analyzing}
@@ -461,6 +483,15 @@ const UploadComponent = ({ onOpenUpload }) => {
                   <MenuItem value={"winter"}>Winter</MenuItem>
                   <MenuItem value={"spring"}>Spring</MenuItem>
                   <MenuItem value={"autumn"}>Autumn</MenuItem>
+                  {Array.isArray(seasonType) ? (
+                    seasonType.map((occ, index) => (
+                      <MenuItem key={index} value={occ}>
+                        {occ}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value={seasonType}>{seasonType}</MenuItem>
+                  )}
                 </Select>
               </FormControl>
 
@@ -494,8 +525,8 @@ const UploadComponent = ({ onOpenUpload }) => {
                 <InputLabel>Style</InputLabel>
                 <Select
                   name="style"
-                  value={style}
-                  onChange={onChange}
+                  value={Array.isArray(style) ? style[0] : style}
+                  onChange={handleStyleChange}
                   id="style"
                   label="Style"
                   sx={{ display: "flex", textAlign: "left" }}
@@ -511,6 +542,15 @@ const UploadComponent = ({ onOpenUpload }) => {
                   <MenuItem value="minimalist">Minimalist</MenuItem>
                   <MenuItem value="streetwear">Streetwear</MenuItem>
                   <MenuItem value="other">Other</MenuItem>
+                  {Array.isArray(style) ? (
+                    style.map((occ, index) => (
+                      <MenuItem key={index} value={occ}>
+                        {occ}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value={style}>{style}</MenuItem>
+                  )}
                 </Select>
               </FormControl>
 
@@ -531,11 +571,11 @@ const UploadComponent = ({ onOpenUpload }) => {
                 <InputLabel>Occasion</InputLabel>
                 <Select
                   name="occasion"
-                  value={occasion}
-                  onChange={onChange}
                   id="occasion"
                   label="Occasion"
                   sx={{ display: "flex", textAlign: "left" }}
+                  value={Array.isArray(occasion) ? occasion[0] : occasion}
+                  onChange={handleOccasionChange}
                 >
                   <MenuItem value="">Select Occasion</MenuItem>
                   <MenuItem value="work">Work</MenuItem>
@@ -550,6 +590,15 @@ const UploadComponent = ({ onOpenUpload }) => {
                   <MenuItem value="dinner">Dinner</MenuItem>
                   <MenuItem value="shopping">Shopping</MenuItem>
                   <MenuItem value="other">Other</MenuItem>
+                  {Array.isArray(occasion) ? (
+                    occasion.map((occ, index) => (
+                      <MenuItem key={index} value={occ}>
+                        {occ}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value={occasion}>{occasion}</MenuItem>
+                  )}
                 </Select>
               </FormControl>
 
@@ -566,7 +615,7 @@ const UploadComponent = ({ onOpenUpload }) => {
                 />
               )}
 
-             {/* <FormControl fullWidth variant="outlined" margin="normal">
+              {/* <FormControl fullWidth variant="outlined" margin="normal">
                  <InputLabel>Weather</InputLabel>
                 <Select
                   name="weather"
@@ -618,14 +667,12 @@ const UploadComponent = ({ onOpenUpload }) => {
                 }}
                 disabled={!imageFile || analyzing}
               >
-                {analyzing
-                  ? "🔄 Analyzing with AI..."
-                  : "💾 Save to Wardrobe"}
+                {analyzing ? "🔄 Analyzing with AI..." : "💾 Save to Wardrobe"}
               </Button>
-              
+
               {message.text && (
-                <Alert 
-                  severity={message.type} 
+                <Alert
+                  severity={message.type}
                   sx={{ mt: 2, mb: 2 }}
                   onClose={() => setMessage({ text: "", type: "" })}
                 >
