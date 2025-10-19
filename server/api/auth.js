@@ -138,4 +138,67 @@ router.get('/user', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/user-details', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ statusCode: 200, user: { id: user._id, username: user.username, email: user.email } });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Update user details
+router.put('/update-user-details', authenticateToken, async (req, res) => {
+  try {
+    console.log("Updating user details");
+    const { username, email, password } = req.body;
+    console.log("Username:", username);
+    console.log("Email:", email);
+    // console.log("Password:", password);
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      console.log("User not found");      
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.username = username;
+    user.email = email;
+    if(password)
+      user.password = password;
+
+    await user.save();
+    res.json({ message: 'User details updated successfully' });
+    res.status(200).json({ statusCode: 200, message: 'User details updated successfully', user: { id: user._id, username: user.username, email: user.email } });
+  }
+  catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+    // const user = await User.findById(req.user.userId);
+  // // router.put('/update-user-details', authenticateToken, async (req, res) => {
+//   try {
+//     console.log("Updating user details");
+//     const { username, email, password } = req.body;
+//     console.log("Username:", username);
+//     console.log("Email:", email);
+//     console.log("Password:", password);
+//     const user = await User.findById(req.user.userId);
+//     console.log("User:", user);
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+//     user.username = username;
+//     user.email = email;
+//     user.password = password;
+//     await user.save();
+//     res.json({ message: 'User details updated successfully' });
+//     res.status(200).json({ statusCode: 200, message: 'User details updated successfully', user: { id: user._id, username: user.username, email: user.email } });
+//   }
+//   catch (error) {
+//     res.status(500).json({ message: 'Server error', error: error.message });
+//   }
+// });
+
 export default router;

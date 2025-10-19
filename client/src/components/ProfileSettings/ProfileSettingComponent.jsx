@@ -1,11 +1,48 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./Profile.css";
+import axios from "axios";
+const API_URL = "http://localhost:3000/api/auth";
 
 export default function ProfileSettingsComponent() {
-  const [name, setName] = useState("Abid Malik Sami");
-  const [email, setEmail] = useState("abid@example.com");
-  const [profileImg, setProfileImg] = useState("https://via.placeholder.com/110");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [profileImg, setProfileImg] = useState(
+    "https://via.placeholder.com/110"
+  );
+  const [loader, setLoader] = useState(false);
   const [message, setMessage] = useState("");
+  const [isNameChange, setIsNameChange] = useState(false);
+  const [isEmailChange, setIsEmailChange] = useState(false);
+  const [isPasswordChange, setIsPasswordChange] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    const fetchUserDetails = async () => {
+      try {
+        setLoader(true);
+        console.log("Fetching user details");
+        // const user = localStorage.getItem("user");
+        const response = await axios.get(`${API_URL}/user-details`);
+        if (response.data.statusCode === 200) {
+          console.log("Response:", response);
+          setName(response.data.user.username);
+          setEmail(response.data.user.email);
+          setLoader(false);
+          setProfileImg(response.data.user.profileImg);
+        }
+      } catch (err) {
+        showMessage("Failed to fetch user details. Please try again.", "error");
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -17,31 +54,32 @@ export default function ProfileSettingsComponent() {
   };
 
   const changeName = () => {
-    const newName = prompt("Enter your new name");
-    if (newName && newName.trim() !== "") {
-      setName(newName.trim());
-      showMessage("Name updated successfully!");
-    }
-  };
-
-  const updateEmail = () => {
-    const newEmail = prompt("Enter your new email");
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(newEmail)) {
-      alert("Please enter a valid email address.");
+    if(isNameChange) {
+      setIsNameChange(false);
       return;
     }
-    setEmail(newEmail);
-    showMessage("Email updated successfully!");
+    else {
+    setIsNameChange(true);
+  }
   };
 
-  const confirmDelete = () => {
-    if (
-      window.confirm(
-        "⚠️ Are you sure you want to delete your account? This action cannot be undone."
-      )
-    ) {
-      alert("Your account has been deleted.");
+  const changeEmail = () => {
+    if(isEmailChange) {
+      setIsEmailChange(false);
+      return;
+    }
+    else {
+      setIsEmailChange(true);
+    }
+  };
+
+  const changePassword = () => {
+    if(isPasswordChange) {
+      setIsPasswordChange(false);
+      return;
+    }
+    else {
+      setIsPasswordChange(true);
     }
   };
 
@@ -50,9 +88,29 @@ export default function ProfileSettingsComponent() {
     setTimeout(() => setMessage(""), 2500);
   };
 
+  const updateValues = async (e) => {
+    e.preventDefault();
+    setIsNameChange(false);
+    setIsEmailChange(false);
+    setIsPasswordChange(false);
+
+    // axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    try {
+      console.log("Updating user details");
+      const response = await axios.put(`${API_URL}/update-user-details`, { username: name, email: email, password: password });
+      if (response.data.statusCode === 200) {
+        showMessage("Values updated successfully!");
+        navigate("/account/dashboard");
+      } else {
+        showMessage("Failed to update values. Please try again.");
+      }
+    } catch (err) {
+      showMessage("Failed to update values. Please try again.");
+    }
+  };
+
   return (
     <div className="profile-container">
-  
       <div className="profile-content">
         {/* Profile Picture */}
         <div className="profile-section picture-section">
@@ -81,42 +139,77 @@ export default function ProfileSettingsComponent() {
         <div className="profile-section">
           <div className="label">Name</div>
           <div className="value">{name}</div>
+          {isNameChange ? (
           <button className="btn" onClick={changeName}>
             Change Name
           </button>
+          ) : (
+            <div>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+              <button className="btn" onClick={updateValues}>
+                Update Name
+              </button>
+              <button className="btn m-2" onClick={changeName}>Cancel</button>
+            </div>
+          )}
         </div>
 
         {/* Email */}
         <div className="profile-section">
           <div className="label">Email</div>
           <div className="value">{email}</div>
-          <button className="btn" onClick={updateEmail}>
-            Update Email
-          </button>
+          {isEmailChange ? (
+            <button className="btn" onClick={changeEmail}>
+              Change Email
+            </button>
+          ) : (
+            <div>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <button className="btn" onClick={updateValues}>
+                Update Email
+              </button>
+              <button className="btn m-2" onClick={changeEmail}>Cancel</button>
+            </div>
+          )}
         </div>
 
         {/* Password */}
         <div className="profile-section">
           <div className="label">Password</div>
-          <div className="value">********</div>
-          <button
-            className="btn"
-            onClick={() => {
-              // TODO: Implement change password functionality
-              alert('Change password functionality coming soon!');
-            }}
-          >
-            Change Password
-          </button>
+          <div className="value">{password? password : "********" }</div>
+          {/* <div className="value">********</div> */}
+          {isPasswordChange ? (
+            <button className="btn" onClick={changePassword}>
+              Change Password
+            </button>
+          ) : (
+            <div>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <button className="btn" onClick={updateValues}>
+                Update Password
+              </button>
+              <button className="btn m-2" onClick={changePassword}>Cancel</button>
+            </div>
+          )}
         </div>
 
         {/* Delete Account */}
-        <div className="profile-section">
+        {/* <div className="profile-section">
           <div className="label danger">Danger Zone</div>
-          <button className="btn btn-danger" onClick={confirmDelete}>
-            Delete Account
-          </button>
-        </div>
+          {isDeleteAccount ? (
+            <button className="btn btn-danger" onClick={confirmDelete}>
+              Delete Account
+            </button>
+          ) : (
+            <div>
+              <button className="btn btn-danger" onClick={confirmDelete}>
+                Confirm Delete
+              </button>
+              <button className="btn btn-danger m-2" onClick={confirmDelete}>Cancel</button>
+            </div>
+          )}
+        
+        </div> */}
       </div>
 
       {message && <div className="message">{message}</div>}
