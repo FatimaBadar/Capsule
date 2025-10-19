@@ -309,6 +309,37 @@ const OutfitSuggestionComponent = () => {
     return colorMap[colorName.toLowerCase()] || '#808080';
   };
 
+  const getImageSrc = (item) => {
+    // First try imageBase64 if it's already a string
+    if (item.imageBase64 && typeof item.imageBase64 === 'string') {
+      return item.imageBase64;
+    }
+    
+    // If imageBase64 is a Buffer object, convert it using browser-compatible method
+    if (item.imageBase64 && item.imageBase64.data && item.imageBase64.contentType) {
+      const uint8Array = new Uint8Array(item.imageBase64.data);
+      const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
+      const base64 = btoa(binaryString);
+      return `data:${item.imageBase64.contentType};base64,${base64}`;
+    }
+    
+    // If image field exists with Buffer data, convert it
+    if (item.image && item.image.data && item.image.contentType) {
+      const uint8Array = new Uint8Array(item.image.data);
+      const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
+      const base64 = btoa(binaryString);
+      return `data:${item.image.contentType};base64,${base64}`;
+    }
+    
+    // Fallback to imageUrl
+    if (item.imageUrl) {
+      return `${API_URL}${item.imageUrl}`;
+    }
+    
+    // Return empty string if no image data
+    return '';
+  };
+
   return (
     <Box sx={{ 
       minHeight: '100vh', 
@@ -338,7 +369,7 @@ const OutfitSuggestionComponent = () => {
           {/* Form Section */}
           <Grid item xs={12} md={6}>
             <Paper sx={{ 
-              background: 'rgba(18, 42, 33, 0.9)',
+              // background: 'rgba(18, 42, 33, 0.9)',
               borderRadius: '12px',
               padding: '30px',
               border: '1px solid rgba(40, 90, 70, 0.3)'
@@ -483,7 +514,7 @@ const OutfitSuggestionComponent = () => {
           {/* Results Section */}
           <Grid item xs={12} md={6}>
             <Paper sx={{ 
-              background: 'rgba(18, 42, 33, 0.9)',
+              // background: 'rgba(18, 42, 33, 0.9)',
               borderRadius: '12px',
               padding: '30px',
               border: '1px solid rgba(40, 90, 70, 0.3)',
@@ -535,19 +566,18 @@ const OutfitSuggestionComponent = () => {
                               maxWidth: '150px'
                             }}>
                               <CardContent sx={{ padding: '10px !important' }}>
-                                <Box sx={{ 
-                                  width: '60px', 
-                                  height: '60px', 
-                                  borderRadius: '5px', 
-                                  margin: '0 auto 8px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '24px',
-                                  backgroundColor: getColorValue(item.color) || '#808080'
-                                }}>
-                                  {getItemIcon(Array.isArray(item.category) ? item.category[0] : item.category)}
-                                </Box>
+                                <img
+                                  src={getImageSrc(item)}
+                                  alt={item.name}
+                                  style={{
+                                    width: '60px',
+                                    height: '60px',
+                                    borderRadius: '5px',
+                                    margin: '0 auto 8px',
+                                    objectFit: 'cover',
+                                    display: 'block'
+                                  }}
+                                />
                                 <Typography sx={{ fontSize: '12px', color: '#fff', textAlign: 'center', marginBottom: '4px' }}>
                                   {item.name}
                                 </Typography>

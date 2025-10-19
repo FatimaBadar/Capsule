@@ -141,7 +141,7 @@ export default function ProfileSettingsComponent() {
         <div className="profile-section">
           <div className="label">Name</div>
           <div className="value">{name}</div>
-          {isNameChange ? (
+          {!isNameChange ? (
           <button className="btn" onClick={changeName}>
             Change Name
           </button>
@@ -160,7 +160,7 @@ export default function ProfileSettingsComponent() {
         <div className="profile-section">
           <div className="label">Email</div>
           <div className="value">{email}</div>
-          {isEmailChange ? (
+          {!isEmailChange ? (
             <button className="btn" onClick={changeEmail}>
               Change Email
             </button>
@@ -180,7 +180,7 @@ export default function ProfileSettingsComponent() {
           <div className="label">Password</div>
           <div className="value">{password? password : "********" }</div>
           {/* <div className="value">********</div> */}
-          {isPasswordChange ? (
+          {!isPasswordChange ? (
             <button className="btn" onClick={changePassword}>
               Change Password
             </button>

@@ -11,6 +11,7 @@ import DashboardComponent from "./components/Dashboard/DashboardComponent";
 import Outfits from "./pages/Outfits";
 import OutfitSuggestion from "./pages/OutfitSuggestion";
 import ProfileSetting from "./pages/ProfileSetting";
+import Blog from "./pages/Blog.jsx";
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -28,6 +29,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/aboutus" element={<AboutUs />} />
+          <Route path="/blog" element={<Blog />} />
           <Route path="/account" element={<Account />} />
           <Route 
             path="/account/dashboard" 
