@@ -20,22 +20,24 @@ import axios from "axios";
 import { Messages } from "primereact/messages";
 import { FileUpload } from "primereact/fileupload";
 import { uploadService } from "../../services/clothingService";
+import { useAuth } from "../../contexts/AuthContext.jsx";
 
 const API_URL = "http://localhost:3000/api/clothes";
 // export default function
 const UploadComponent = ({ onOpenUpload }) => {
+  const { user } = useAuth();
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [title, setTitle] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [fabric, setFabric] = useState("");
-  const [category, setCategory] = useState("");
-  const [seasonType, setSeasonType] = useState([""]);
+  const [category, setCategory] = useState([]);
+  const [seasonType, setSeasonType] = useState([]);
   const [color, setColor] = useState("");
-  const [style, setStyle] = useState([""]);
+  const [style, setStyle] = useState([]);
   const [customStyle, setCustomStyle] = useState("");
-  const [occasion, setOccasion] = useState([""]);
+  const [occasion, setOccasion] = useState([]);
   const [customOccasion, setCustomOccasion] = useState("");
   // const [weather, setWeather] = useState("");
   // const [tags, setTags] = useState("");
@@ -59,10 +61,10 @@ const UploadComponent = ({ onOpenUpload }) => {
       setAiAnalysis(aiItem);
       setTitle(aiItem.title || "");
       setDescription(aiItem.description || "");
-      setCategory(aiItem.category || "");
+      setCategory(Array.isArray(aiItem.category) ? aiItem.category : [aiItem.category || ""]);
       setFabric(aiItem.fabric || "");
       setColor(aiItem.color || "");
-      setSeasonType(aiItem.seasonType || "");
+      setSeasonType(Array.isArray(aiItem.seasonType) ? aiItem.seasonType : [aiItem.seasonType || ""]);
     }
     // return () => {
     //   localStorage.removeItem("newTempClothes");
@@ -76,12 +78,12 @@ const UploadComponent = ({ onOpenUpload }) => {
     setName("");
     setDescription("");
     setFabric("");
-    setCategory("");
-    setSeasonType("");
+    setCategory([]);
+    setSeasonType([]);
     setColor("");
-    setStyle("");
+    setStyle([]);
     setCustomStyle("");
-    setOccasion("");
+    setOccasion([]);
     setCustomOccasion("");
     // setWeather("");
     // setTags("");
@@ -133,12 +135,12 @@ const UploadComponent = ({ onOpenUpload }) => {
         // Auto-fill fields
         setTitle(aiItem.title || "");
         setDescription(aiItem.description || "");
-        setCategory(aiItem.category || "");
+        setCategory(Array.isArray(aiItem.category) ? aiItem.category : [aiItem.category || ""]);
         setFabric(aiItem.fabric || "");
         setColor(aiItem.color || "");
-        setSeasonType(aiItem.seasonType || "");
-        setStyle(aiItem.style || "");
-        setOccasion(aiItem.occasion || "");
+        setSeasonType(Array.isArray(aiItem.seasonType) ? aiItem.seasonType : [aiItem.seasonType || ""]);
+        setStyle(Array.isArray(aiItem.style) ? aiItem.style : [aiItem.style || ""]);
+        setOccasion(Array.isArray(aiItem.occasion) ? aiItem.occasion : [aiItem.occasion || ""]);
         // setWeather(aiItem.weather || "");
 
         localStorage.setItem("newTempClothes", JSON.stringify(aiItem));
@@ -168,7 +170,7 @@ const UploadComponent = ({ onOpenUpload }) => {
       showMessage("Please enter a title for the item.", "error");
       return;
     }
-    if (!category) {
+    if (!category || (Array.isArray(category) && category.length === 0) || (Array.isArray(category) && category[0] === "")) {
       showMessage("Please select a category.", "error");
       return;
     }
@@ -184,30 +186,34 @@ const UploadComponent = ({ onOpenUpload }) => {
     formData.append("name", name || title);
     formData.append("description", description);
     formData.append("fabric", fabric);
-    formData.append("category", category);
-    formData.append("seasonType", seasonType);
+    formData.append("category", Array.isArray(category) ? category.join(',') : category);
+    formData.append("seasonType", Array.isArray(seasonType) ? seasonType.join(',') : seasonType);
     formData.append("color", color);
-    formData.append("style", style === "other" ? customStyle : style);
+    formData.append("style", Array.isArray(style) ? style.join(',') : style);
     formData.append(
       "occasion",
-      occasion === "other" ? customOccasion : occasion
+      Array.isArray(occasion) ? occasion.join(',') : occasion
     );
     // formData.append("weather", weather);
     // formData.append("tags", tags);
-    formData.append("user", localStorage.getItem("user") || "default");
+    formData.append("user", user?.username || "default");
 
     try {
       const response = await axios.post(
         `${API_URL}/upload-clothing`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`
+          },
         }
       );
 
       if (
         response.data.statusCode === "200" ||
-        response.data.statusCode === 200
+        response.data.statusCode === 200 ||
+        (response.data.item && response.data.message === "Clothing saved successfully")
       ) {
         showMessage("New item successfully added!", "success");
         resetForm();
@@ -236,13 +242,13 @@ const UploadComponent = ({ onOpenUpload }) => {
         setName(value);
         break;
       case "category":
-        setCategory(value);
+        setCategory([value]);
         break;
       case "fabric":
         setFabric(value);
         break;
       case "seasonType":
-        setSeasonType(value);
+        setSeasonType([value]);
         break;
       case "description":
         setDescription(value);
@@ -251,13 +257,13 @@ const UploadComponent = ({ onOpenUpload }) => {
         setColor(value);
         break;
       case "style":
-        setStyle(value);
+        setStyle([value]);
         break;
       case "customStyle":
         setCustomStyle(value);
         break;
       case "occasion":
-        setOccasion(value);
+        setOccasion([value]);
         break;
       case "customOccasion":
         setCustomOccasion(value);
@@ -274,17 +280,17 @@ const UploadComponent = ({ onOpenUpload }) => {
   };
   const handleOccasionChange = (event) => {
     const value = event.target.value;
-    setOccasion(value);
+    setOccasion([value]);
   };
 
   const handleStyleChange = (event) => {
     const value = event.target.value;
-    setStyle(value);
+    setStyle([value]);
   };
 
   const handleSeasonTypeChange = (event) => {
     const value = event.target.value;
-    setSeasonType(value);
+    setSeasonType([value]);
   };
 
 
@@ -425,7 +431,7 @@ const UploadComponent = ({ onOpenUpload }) => {
                 <Select
                   required
                   name="category"
-                  value={category}
+                  value={Array.isArray(category) ? category[0] || "" : category}
                   autoComplete="category"
                   onChange={onChange}
                   id="category"
@@ -446,6 +452,8 @@ const UploadComponent = ({ onOpenUpload }) => {
                   <MenuItem value={"hoodie"}>Hoodie</MenuItem>
                   <MenuItem value={"blouse"}>Blouse</MenuItem>
                   <MenuItem value={"suit"}>Suit</MenuItem>
+                  <MenuItem value={"shoes"}>Shoes</MenuItem>
+                  <MenuItem value={"accessories"}>Accessories</MenuItem>
                   <MenuItem value={"other"}>Other</MenuItem>
                 </Select>
               </FormControl>
@@ -471,8 +479,9 @@ const UploadComponent = ({ onOpenUpload }) => {
                   autoComplete="seasonType"
                   // onChange={onChange}
 
-                  value={Array.isArray(seasonType) ? seasonType[0] : seasonType}
-                  onChange={handleSeasonTypeChange}                  id="seasonType"
+                  value={Array.isArray(seasonType) ? seasonType[0] || "" : seasonType}
+                  onChange={handleSeasonTypeChange}
+                  id="seasonType"
                   label="seasonType"
                   sx={{ display: "flex", textAlign: "left" }}
                   // disabled={!imageFile || analyzing}
@@ -525,7 +534,7 @@ const UploadComponent = ({ onOpenUpload }) => {
                 <InputLabel>Style</InputLabel>
                 <Select
                   name="style"
-                  value={Array.isArray(style) ? style[0] : style}
+                  value={Array.isArray(style) ? style[0] || "" : style}
                   onChange={handleStyleChange}
                   id="style"
                   label="Style"
@@ -574,7 +583,7 @@ const UploadComponent = ({ onOpenUpload }) => {
                   id="occasion"
                   label="Occasion"
                   sx={{ display: "flex", textAlign: "left" }}
-                  value={Array.isArray(occasion) ? occasion[0] : occasion}
+                  value={Array.isArray(occasion) ? occasion[0] || "" : occasion}
                   onChange={handleOccasionChange}
                 >
                   <MenuItem value="">Select Occasion</MenuItem>

@@ -95,7 +95,7 @@ export default function GridViewComponent() {
             <div className="flex align-items-center gap-2">
               <i className="pi pi-tag"></i>
               <span className="font-semibold">
-                {item.category.toUpperCase()}
+                {Array.isArray(item.category) ? item.category.join(', ').toUpperCase() : item.category.toUpperCase()}
               </span>
             </div>
             <Button
@@ -117,7 +117,7 @@ export default function GridViewComponent() {
               <div className="text-sm text-gray-600">Color: {item.color}</div>
             )}
             {item.style && (
-              <div className="text-sm text-gray-600">Style: {item.style}</div>
+              <div className="text-sm text-gray-600">Style: {Array.isArray(item.style) ? item.style.join(', ') : item.style}</div>
             )}
           </div>
         </div>

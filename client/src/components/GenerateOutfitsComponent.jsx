@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useAuth } from "../contexts/AuthContext.jsx";
 const API_URL = "http://localhost:3000/api/clothes";
 
 export default function GenerateOutfitsComponent() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [outfits, setOutfits] = useState([""]);
@@ -12,14 +14,16 @@ export default function GenerateOutfitsComponent() {
     setError("");
     try {
       // Call your backend API
-      const user = localStorage.getItem("user") || "default";
-      // if (user === "default") {
-      //   setError("Please log in to generate outfits.");
-      //   setLoading(false);
-      //   return;
-      // }
+      if (!user) {
+        setError("Please log in to generate outfits.");
+        setLoading(false);
+        return;
+      }
       const response = await axios.get(
-                `${API_URL}/generate-outfits`, {user: user
+                `${API_URL}/generate-outfits`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
         // you can send user inputs here if needed
         // e.g., style: "casual", color: "blue"
       });

@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "./Profile.css";
 import axios from "axios";
+import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 const API_URL = "http://localhost:3000/api/auth";
 
 export default function ProfileSettingsComponent() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,17 +21,15 @@ export default function ProfileSettingsComponent() {
   const [isPasswordChange, setIsPasswordChange] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!user) {
       navigate("/login");
       return;
     }
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    
     const fetchUserDetails = async () => {
       try {
         setLoader(true);
         console.log("Fetching user details");
-        // const user = localStorage.getItem("user");
         const response = await axios.get(`${API_URL}/user-details`);
         if (response.data.statusCode === 200) {
           console.log("Response:", response);
@@ -42,7 +44,7 @@ export default function ProfileSettingsComponent() {
     };
 
     fetchUserDetails();
-  }, []);
+  }, [user, navigate]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];

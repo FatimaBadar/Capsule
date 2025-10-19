@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -277,6 +279,7 @@ const TypeButton = styled.button`
 `;
 
 function SuggestionsComponent() {
+  const { user } = useAuth();
   const [filters, setFilters] = useState({
     color: '',
     style: '',
@@ -286,9 +289,15 @@ function SuggestionsComponent() {
   const [city, setCity] = useState('');
   const [weather, setWeather] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
-  const [aiOutfits, setAiOutfits] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [suggestionType, setSuggestionType] = useState('rule-based'); // 'rule-based' or 'ai'
+  const [message, setMessage] = useState({ text: '', type: '' });
+  const [availableOptions, setAvailableOptions] = useState({
+    colors: [],
+    styles: [],
+    occasions: [],
+    weathers: []
+  });
+  const [allItems, setAllItems] = useState([]);
 
   const getWeatherIcon = (condition) => {
     const icons = {
@@ -327,7 +336,14 @@ function SuggestionsComponent() {
   };
 
   const getRuleBasedSuggestions = async () => {
+    if (!user) {
+      showMessage('Please log in to get suggestions', 'error');
+      return;
+    }
+
     setLoading(true);
+    setMessage({ text: '', type: '' });
+    
     try {
       const preferences = {
         color: filters.color,
@@ -340,132 +356,204 @@ function SuggestionsComponent() {
         preferences,
         weather: weatherType,
         occasion: filters.occasion
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
       
-      setSuggestions(response.data.suggestions);
-      setAiOutfits(null); // Clear AI suggestions
+      if (response.data.suggestions) {
+        setSuggestions(response.data.suggestions);
+        showMessage('Suggestions loaded successfully!', 'success');
+      } else {
+        showMessage('No suggestions found matching your criteria', 'warning');
+        setSuggestions(null);
+      }
     } catch (error) {
       console.error('Error getting suggestions:', error);
-      alert(error.response?.data?.message || 'Error getting suggestions');
+      showMessage(
+        error.response?.data?.message || 'Error getting suggestions',
+        'error'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const getAISuggestions = async () => {
-    setLoading(true);
-    try {
-      const preferences = {
-        color: filters.color,
-        style: filters.style
-      };
-      
-      const weatherType = weather ? getWeatherSeason(weather.temperature) : filters.weather;
-      
-      const response = await axios.post('http://localhost:3000/api/clothes/suggestions/ai', {
-        preferences,
-        weather: weatherType,
-        occasion: filters.occasion
+  const showMessage = (text, type = 'info') => {
+    setMessage({ text, type });
+  };
+
+  // Filter options based on current selections
+  const getFilteredOptions = () => {
+    let filteredItems = allItems;
+
+    // Filter by color if selected
+    if (filters.color) {
+      filteredItems = filteredItems.filter(item => item.color === filters.color);
+    }
+
+    // Filter by style if selected
+    if (filters.style) {
+      filteredItems = filteredItems.filter(item => {
+        const itemStyles = Array.isArray(item.style) ? item.style : [item.style];
+        return itemStyles.includes(filters.style);
       });
-      
-      setAiOutfits(response.data.outfit);
-      setSuggestions(null); // Clear rule-based suggestions
-    } catch (error) {
-      console.error('Error getting AI suggestions:', error);
-      alert(error.response?.data?.message || 'Error getting AI suggestions');
-    } finally {
-      setLoading(false);
     }
-  };
 
-  const getEnhancedOutfitSuggestions = async () => {
-    setLoading(true);
-    try {
-      const weatherType = weather ? getWeatherSeason(weather.temperature) : filters.weather;
-      
-      const response = await axios.post('http://localhost:3000/api/clothes/outfits/generate', {
-        style: filters.style,
-        color: filters.color,
-        weather: weatherType,
-        occasion: filters.occasion,
-        city: city
+    // Filter by occasion if selected
+    if (filters.occasion) {
+      filteredItems = filteredItems.filter(item => {
+        const itemOccasions = Array.isArray(item.occasion) ? item.occasion : [item.occasion];
+        return itemOccasions.includes(filters.occasion);
       });
-      
-      setAiOutfits(response.data.outfits);
-      setSuggestions(null); // Clear rule-based suggestions
-    } catch (error) {
-      console.error('Error getting enhanced outfit suggestions:', error);
-      alert(error.response?.data?.message || 'Error getting enhanced outfit suggestions');
-    } finally {
-      setLoading(false);
     }
+
+    // Filter by weather if selected
+    if (filters.weather) {
+      filteredItems = filteredItems.filter(item => {
+        const itemWeathers = Array.isArray(item.seasonType) ? item.seasonType : [item.seasonType];
+        return itemWeathers.includes(filters.weather);
+      });
+    }
+
+    // Extract available options from filtered items
+    const availableColors = [...new Set(filteredItems.map(item => item.color).filter(Boolean))];
+    const availableStyles = [...new Set(filteredItems.flatMap(item => 
+      Array.isArray(item.style) ? item.style : [item.style]
+    ).filter(Boolean))];
+    const availableOccasions = [...new Set(filteredItems.flatMap(item => 
+      Array.isArray(item.occasion) ? item.occasion : [item.occasion]
+    ).filter(Boolean))];
+    const availableWeathers = [...new Set(filteredItems.flatMap(item => 
+      Array.isArray(item.seasonType) ? item.seasonType : [item.seasonType]
+    ).filter(Boolean))];
+
+    return {
+      colors: availableColors.sort(),
+      styles: availableStyles.sort(),
+      occasions: availableOccasions.sort(),
+      weathers: availableWeathers.sort()
+    };
   };
 
-  useEffect(() => {
-    if (weather) {
-      if (suggestionType === 'rule-based') {
-        getRuleBasedSuggestions();
-      } else {
-        getAISuggestions();
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => {
+      const newFilters = { ...prev, [field]: value };
+      
+      // Reset dependent fields when a parent field changes
+      if (field === 'color') {
+        newFilters.style = '';
+        newFilters.occasion = '';
+        newFilters.weather = '';
+      } else if (field === 'style') {
+        newFilters.occasion = '';
+        newFilters.weather = '';
+      } else if (field === 'occasion') {
+        newFilters.weather = '';
       }
+      
+      return newFilters;
+    });
+  };
+
+  const fetchAvailableOptions = async () => {
+    if (!user) return;
+
+    try {
+      const response = await axios.get('http://localhost:3000/api/clothes/get-all-clothes', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data.items) {
+        const items = response.data.items;
+        
+        // Store all items for filtering
+        setAllItems(items);
+        
+        // Extract unique colors
+        const colors = [...new Set(items.map(item => item.color).filter(Boolean))];
+        
+        // Extract unique styles (handle arrays)
+        const styles = [...new Set(items.flatMap(item => 
+          Array.isArray(item.style) ? item.style : [item.style]
+        ).filter(Boolean))];
+        
+        // Extract unique occasions (handle arrays)
+        const occasions = [...new Set(items.flatMap(item => 
+          Array.isArray(item.occasion) ? item.occasion : [item.occasion]
+        ).filter(Boolean))];
+        
+        // Extract unique seasons (handle arrays)
+        const weathers = [...new Set(items.flatMap(item => 
+          Array.isArray(item.seasonType) ? item.seasonType : [item.seasonType]
+        ).filter(Boolean))];
+
+        setAvailableOptions({
+          colors: colors.sort(),
+          styles: styles.sort(),
+          occasions: occasions.sort(),
+          weathers: weathers.sort()
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching available options:', error);
     }
-  }, [weather]);
+  };
+
+  // Fetch available options when component mounts
+  React.useEffect(() => {
+    if (user) {
+      fetchAvailableOptions();
+    }
+  }, [user]);
 
   return (
     <Container>
       <Title>Clothing Suggestions</Title>
       
       <FiltersSection>
-        <h3>Customize Your Preferences</h3>
-        
-        <SuggestionTypeSelector>
-          <TypeButton 
-            active={suggestionType === 'rule-based'} 
-            onClick={() => setSuggestionType('rule-based')}
-          >
-            📋 Rule-Based Suggestions
-          </TypeButton>
-          <TypeButton 
-            active={suggestionType === 'ai'} 
-            onClick={() => setSuggestionType('ai')}
-          >
-            🤖 AI Outfit Coordination
-          </TypeButton>
-        </SuggestionTypeSelector>
+        <h3>Get Clothing Suggestions</h3>
+        <p>Enter your preferences to get personalized clothing suggestions from your wardrobe.</p>
 
         <FilterRow>
-          <Input
-            type="text"
-            placeholder="Preferred color"
+          <Select
             value={filters.color}
-            onChange={(e) => setFilters({...filters, color: e.target.value})}
-          />
-          <Input
-            type="text"
-            placeholder="Style (casual, formal, etc.)"
+            onChange={(e) => handleFilterChange('color', e.target.value)}
+          >
+            <option value="">Any Color</option>
+            {getFilteredOptions().colors.map(color => (
+              <option key={color} value={color}>{color}</option>
+            ))}
+          </Select>
+          <Select
             value={filters.style}
-            onChange={(e) => setFilters({...filters, style: e.target.value})}
-          />
+            onChange={(e) => handleFilterChange('style', e.target.value)}
+          >
+            <option value="">Any Style</option>
+            {getFilteredOptions().styles.map(style => (
+              <option key={style} value={style}>{style}</option>
+            ))}
+          </Select>
           <Select
             value={filters.occasion}
-            onChange={(e) => setFilters({...filters, occasion: e.target.value})}
+            onChange={(e) => handleFilterChange('occasion', e.target.value)}
           >
             <option value="">Any Occasion</option>
-            <option value="work">Work</option>
-            <option value="party">Party</option>
-            <option value="casual">Casual</option>
-            <option value="formal">Formal</option>
-            <option value="sporty">Sporty</option>
+            {getFilteredOptions().occasions.map(occasion => (
+              <option key={occasion} value={occasion}>{occasion}</option>
+            ))}
           </Select>
           <Select
             value={filters.weather}
-            onChange={(e) => setFilters({...filters, weather: e.target.value})}
+            onChange={(e) => handleFilterChange('weather', e.target.value)}
           >
-            <option value="">Any Weather</option>
-            <option value="summer">Summer</option>
-            <option value="winter">Winter</option>
-            <option value="spring">Spring</option>
-            <option value="fall">Fall</option>
+            <option value="">Any Season</option>
+            {getFilteredOptions().weathers.map(weather => (
+              <option key={weather} value={weather}>{weather}</option>
+            ))}
           </Select>
         </FilterRow>
         
@@ -482,15 +570,28 @@ function SuggestionsComponent() {
 
         <ButtonGroup>
           <PrimaryButton onClick={getRuleBasedSuggestions}>
-            Get Rule-Based Suggestions
+            Get Suggestions
           </PrimaryButton>
-          <SecondaryButton onClick={getAISuggestions}>
-            Get AI Outfit Suggestions
-          </SecondaryButton>
-          <SecondaryButton onClick={getEnhancedOutfitSuggestions} style={{ background: '#8FD3B4', color: '#0A1F17' }}>
-            Get Enhanced Outfit Suggestions
-          </SecondaryButton>
         </ButtonGroup>
+
+        {message.text && (
+          <div style={{ 
+            marginTop: '1rem', 
+            padding: '1rem', 
+            borderRadius: '5px',
+            backgroundColor: message.type === 'error' ? '#ffebee' : 
+                            message.type === 'success' ? '#e8f5e8' : 
+                            message.type === 'warning' ? '#fff3e0' : '#e3f2fd',
+            color: message.type === 'error' ? '#c62828' : 
+                   message.type === 'success' ? '#2e7d32' : 
+                   message.type === 'warning' ? '#f57c00' : '#1976d2',
+            border: `1px solid ${message.type === 'error' ? '#ffcdd2' : 
+                                message.type === 'success' ? '#c8e6c9' : 
+                                message.type === 'warning' ? '#ffcc02' : '#bbdefb'}`
+          }}>
+            {message.text}
+          </div>
+        )}
       </FiltersSection>
 
       {weather && (
@@ -507,12 +608,7 @@ function SuggestionsComponent() {
 
       {loading && (
         <LoadingMessage>
-          <h3>
-            {suggestionType === 'ai' 
-              ? 'AI is crafting the perfect outfit for you...' 
-              : 'Finding the perfect outfit for you...'
-            }
-          </h3>
+          <h3>Finding the perfect suggestions for you...</h3>
         </LoadingMessage>
       )}
 
@@ -532,7 +628,7 @@ function SuggestionsComponent() {
                       <ItemInfo>
                         <ItemName>{item.name}</ItemName>
                         <ItemDetails>
-                          {item.color} • {item.style || 'Any style'} • {item.occasion || 'Any occasion'}
+                          {item.color} • {Array.isArray(item.style) ? item.style.join(', ') : (item.style || 'Any style')} • {Array.isArray(item.occasion) ? item.occasion.join(', ') : (item.occasion || 'Any occasion')}
                         </ItemDetails>
                       </ItemInfo>
                     </SuggestionItem>
@@ -544,38 +640,12 @@ function SuggestionsComponent() {
         </SuggestionsGrid>
       )}
 
-      {aiOutfits && !loading && (
-        <AIOutfitsGrid>
-          {aiOutfits.map((outfit) => (
-            <OutfitCard key={outfit.id}>
-              <OutfitHeader>
-                <OutfitTitle>{outfit.name}</OutfitTitle>
-                <OutfitDescription>{outfit.description}</OutfitDescription>
-              </OutfitHeader>
-              <OutfitItems>
-                {outfit.items.map((item) => (
-                  <OutfitItem key={item._id}>
-                    <OutfitItemImage src={item.imageBase64 || item.imageUrl} alt={item.name} />
-                    <OutfitItemInfo>
-                      <OutfitItemName>{item.name}</OutfitItemName>
-                      <OutfitItemDetails>
-                        {item.category} • {item.color} • {item.style || 'Any style'}
-                      </OutfitItemDetails>
-                    </OutfitItemInfo>
-                  </OutfitItem>
-                ))}
-              </OutfitItems>
-            </OutfitCard>
-          ))}
-        </AIOutfitsGrid>
-      )}
-
-      {!suggestions && !aiOutfits && !loading && (
+      {!suggestions && !loading && (
         <EmptyMessage>
           <h3>Ready to get suggestions?</h3>
           <p>
-            Choose between rule-based suggestions (filtered by your criteria) or AI-powered outfit coordination 
-            (complete outfits selected by our algorithm). Enter your preferences and click a suggestion button!
+            Enter your preferences above and click "Get Suggestions" to see clothing items from your wardrobe 
+            that match your criteria. You can filter by color, style, occasion, and weather.
           </p>
         </EmptyMessage>
       )}

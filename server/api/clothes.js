@@ -83,12 +83,23 @@ router.post(
         tags,
         user 
       } = req.body;
+
+      // Parse comma-separated values into arrays
+      const parsedCategory = category ? category.split(',').map(c => c.trim()).filter(c => c) : [];
+      const parsedSeasonType = seasonType ? seasonType.split(',').map(s => s.trim()).filter(s => s) : [];
+      const parsedStyle = style ? style.split(',').map(s => s.trim()).filter(s => s) : [];
+      const parsedOccasion = occasion ? occasion.split(',').map(o => o.trim()).filter(o => o) : [];
       
       if (!req.file) {
         return res.status(400).json({ message: "No image file uploaded" });
       }
       
       const filePath = path.join("uploads", req.file.filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(400).json({ message: "Uploaded file not found" });
+      }
+      
       const imageData = fs.readFileSync(filePath);
 
       const newClothing = new Clothes({
@@ -97,11 +108,11 @@ router.post(
         name: name || title,
         description,
         fabric,
-        category,
-        seasonType,
+        category: parsedCategory,
+        seasonType: parsedSeasonType,
         color,
-        style,
-        occasion,
+        style: parsedStyle,
+        occasion: parsedOccasion,
         weather,
         tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
         user, // Keep for backward compatibility
@@ -281,19 +292,33 @@ router.post("/suggestions", authenticateToken, async (req, res) => {
     let suggestions = wardrobe.filter(item => {
       let matches = true;
 
-      // Filter by occasion
-      if (occasion && item.occasion && item.occasion !== occasion) {
-        matches = false;
+      // Filter by occasion (handle arrays)
+      if (occasion && item.occasion) {
+        const itemOccasions = Array.isArray(item.occasion) ? item.occasion : [item.occasion];
+        if (!itemOccasions.includes(occasion)) {
+          matches = false;
+        }
       }
 
-      // Filter by weather
-      if (weather && item.weather && item.weather !== weather) {
-        matches = false;
+      // Filter by weather/season (handle arrays)
+      if (weather && item.seasonType) {
+        const itemSeasons = Array.isArray(item.seasonType) ? item.seasonType : [item.seasonType];
+        if (!itemSeasons.includes(weather) && !itemSeasons.includes('all-season')) {
+          matches = false;
+        }
       }
 
       // Filter by color preference
       if (preferences.color && item.color !== preferences.color) {
         matches = false;
+      }
+
+      // Filter by style preference (handle arrays)
+      if (preferences.style && item.style) {
+        const itemStyles = Array.isArray(item.style) ? item.style : [item.style];
+        if (!itemStyles.includes(preferences.style)) {
+          matches = false;
+        }
       }
 
       return matches;
@@ -304,12 +329,24 @@ router.post("/suggestions", authenticateToken, async (req, res) => {
       suggestions = wardrobe;
     }
 
-    // Group by category
+    // Group by category (handle arrays)
     const groupedSuggestions = {
-      tops: suggestions.filter(item => ['top', 'shirt', 't-shirt', 'blouse', 'sweater', 'hoodie'].includes(item.category)),
-      bottoms: suggestions.filter(item => ['bottom', 'pants', 'jeans', 'skirt', 'shorts'].includes(item.category)),
-      shoes: suggestions.filter(item => item.category === 'shoes'),
-      accessories: suggestions.filter(item => item.category === 'accessories')
+      tops: suggestions.filter(item => {
+        const categories = Array.isArray(item.category) ? item.category : [item.category];
+        return ['top', 'shirt', 't-shirt', 'blouse', 'sweater', 'hoodie'].some(cat => categories.includes(cat));
+      }),
+      bottoms: suggestions.filter(item => {
+        const categories = Array.isArray(item.category) ? item.category : [item.category];
+        return ['bottom', 'pants', 'jeans', 'skirt', 'shorts'].some(cat => categories.includes(cat));
+      }),
+      shoes: suggestions.filter(item => {
+        const categories = Array.isArray(item.category) ? item.category : [item.category];
+        return categories.includes('shoes');
+      }),
+      accessories: suggestions.filter(item => {
+        const categories = Array.isArray(item.category) ? item.category : [item.category];
+        return categories.includes('accessories');
+      })
     };
 
     res.json({ suggestions: groupedSuggestions, type: 'rule-based' });

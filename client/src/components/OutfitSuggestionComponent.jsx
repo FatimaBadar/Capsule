@@ -26,6 +26,14 @@ const OutfitSuggestionComponent = () => {
   const [outfits, setOutfits] = useState([]);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [weatherLoading, setWeatherLoading] = useState(true);
+  const [availableOptions, setAvailableOptions] = useState({
+    colors: [],
+    styles: [],
+    occasions: [],
+    weathers: []
+  });
+  const [allItems, setAllItems] = useState([]);
+  const [suggestions, setSuggestions] = useState(null);
 
   const styleOptions = [
     'Casual', 'Business', 'Athletic', 'Evening', 'Beach', 'Formal', 'Streetwear', 'Minimalist'
@@ -91,12 +99,100 @@ const OutfitSuggestionComponent = () => {
     }
   };
 
+  const fetchAvailableOptions = async () => {
+    if (!user) return;
+
+    try {
+      const response = await axios.get(`${API_URL}/api/clothes/get-all-clothes`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data.items) {
+        const items = response.data.items;
+        
+        // Store all items for filtering
+        setAllItems(items);
+        
+        // Extract unique colors
+        const colors = [...new Set(items.map(item => item.color).filter(Boolean))];
+        
+        // Extract unique styles (handle arrays)
+        const styles = [...new Set(items.flatMap(item => 
+          Array.isArray(item.style) ? item.style : [item.style]
+        ).filter(Boolean))];
+        
+        // Extract unique occasions (handle arrays)
+        const occasions = [...new Set(items.flatMap(item => 
+          Array.isArray(item.occasion) ? item.occasion : [item.occasion]
+        ).filter(Boolean))];
+        
+        // Extract unique seasons (handle arrays)
+        const weathers = [...new Set(items.flatMap(item => 
+          Array.isArray(item.seasonType) ? item.seasonType : [item.seasonType]
+        ).filter(Boolean))];
+
+        setAvailableOptions({
+          colors: colors.sort(),
+          styles: styles.sort(),
+          occasions: occasions.sort(),
+          weathers: weathers.sort()
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching available options:', error);
+    }
+  };
+
   useEffect(() => {
     fetchWeatherData();
-  }, []);
+    if (user) {
+      fetchAvailableOptions();
+    }
+  }, [user]);
 
   const showMessage = (text, type = 'info') => {
     setMessage({ text, type });
+  };
+
+  // Filter options based on current selections
+  const getFilteredOptions = () => {
+    let filteredItems = allItems;
+
+    // Filter by color if selected
+    if (selectedColor) {
+      filteredItems = filteredItems.filter(item => item.color === selectedColor);
+    }
+
+    // Filter by style if selected
+    if (selectedStyle) {
+      filteredItems = filteredItems.filter(item => {
+        const itemStyles = Array.isArray(item.style) ? item.style : [item.style];
+        return itemStyles.includes(selectedStyle);
+      });
+    }
+
+    // Extract available options from filtered items
+    const availableColors = [...new Set(filteredItems.map(item => item.color).filter(Boolean))];
+    const availableStyles = [...new Set(filteredItems.flatMap(item => 
+      Array.isArray(item.style) ? item.style : [item.style]
+    ).filter(Boolean))];
+
+    return {
+      colors: availableColors.sort(),
+      styles: availableStyles.sort()
+    };
+  };
+
+  const handleColorChange = (color) => {
+    setSelectedColor(color);
+    // Reset style when color changes
+    setSelectedStyle('');
+  };
+
+  const handleStyleChange = (style) => {
+    setSelectedStyle(style);
   };
 
   const generateOutfits = async () => {
@@ -107,23 +203,30 @@ const OutfitSuggestionComponent = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/api/clothes/outfits/generate`, {
-        style: selectedStyle.toLowerCase(),
+      const preferences = {
         color: selectedColor,
-        weather: weather?.description || 'Sunny',
-        occasion: 'General',
-        city: weather?.city || 'Auckland'
+        style: selectedStyle
+      };
+      
+      const weatherType = weather ? getWeatherSeason(weather.temperature) : 'all-season';
+      
+      const response = await axios.post(`${API_URL}/api/clothes/suggestions`, {
+        preferences,
+        weather: weatherType,
+        occasion: 'General'
       }, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (response.data.statusCode === 200) {
-        setOutfits(response.data.outfits);
+      if (response.data.suggestions) {
+        setSuggestions(response.data.suggestions);
+        setOutfits([]); // Clear old AI outfits
         showMessage('Outfit suggestions generated successfully!', 'success');
       } else {
-        showMessage('Failed to generate outfit suggestions. Please try again.', 'error');
+        showMessage('No suggestions found matching your criteria', 'warning');
+        setSuggestions(null);
       }
     } catch (error) {
       console.error('Outfit generation error:', error);
@@ -131,6 +234,13 @@ const OutfitSuggestionComponent = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getWeatherSeason = (temperature) => {
+    if (temperature < 10) return 'winter';
+    if (temperature < 20) return 'spring';
+    if (temperature < 30) return 'fall';
+    return 'summer';
   };
 
   const saveOutfit = async (outfit) => {
@@ -167,9 +277,36 @@ const OutfitSuggestionComponent = () => {
       'sweater': '🧥',
       'blouse': '👔',
       'suit': '👔',
+      'accessories': '👜',
       'other': '👕'
     };
     return icons[category] || '👕';
+  };
+
+  const getColorValue = (colorName) => {
+    const colorMap = {
+      'black': '#000000',
+      'white': '#FFFFFF',
+      'gray': '#808080',
+      'grey': '#808080',
+      'brown': '#964B00',
+      'blue': '#0000FF',
+      'red': '#FF0000',
+      'green': '#008000',
+      'yellow': '#FFFF00',
+      'purple': '#800080',
+      'orange': '#FFA500',
+      'pink': '#FFC0CB',
+      'maroon': '#A52A2A',
+      'cyan': '#00FFFF',
+      'indigo': '#4B0082',
+      'gold': '#FFD700',
+      'silver': '#C0C0C0',
+      'navy': '#000080',
+      'beige': '#F5F5DC',
+      'tan': '#D2B48C'
+    };
+    return colorMap[colorName.toLowerCase()] || '#808080';
   };
 
   return (
@@ -240,22 +377,28 @@ const OutfitSuggestionComponent = () => {
                   Select a style
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
-                  {styleOptions.map((style) => (
-                    <Chip
-                      key={style}
-                      label={style}
-                      onClick={() => setSelectedStyle(style)}
-                      sx={{
-                        background: selectedStyle === style ? 'rgba(50, 110, 85, 0.9)' : 'rgba(30, 65, 50, 0.7)',
-                        border: selectedStyle === style ? '1px solid #8FD3B4' : '1px solid rgba(60, 120, 100, 0.4)',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          background: 'rgba(40, 85, 65, 0.8)'
-                        }
-                      }}
-                    />
-                  ))}
+                  {getFilteredOptions().styles.length > 0 ? (
+                    getFilteredOptions().styles.map((style) => (
+                      <Chip
+                        key={style}
+                        label={style}
+                        onClick={() => handleStyleChange(style)}
+                        sx={{
+                          background: selectedStyle === style ? 'rgba(50, 110, 85, 0.9)' : 'rgba(30, 65, 50, 0.7)',
+                          border: selectedStyle === style ? '1px solid #8FD3B4' : '1px solid rgba(60, 120, 100, 0.4)',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            background: 'rgba(40, 85, 65, 0.8)'
+                          }
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <Typography sx={{ color: '#8FD3B4', fontStyle: 'italic' }}>
+                      {selectedColor ? `No styles available for ${selectedColor} items` : 'No styles available in your wardrobe'}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
 
@@ -268,26 +411,32 @@ const OutfitSuggestionComponent = () => {
                   Select a color
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
-                  {colorOptions.map((color) => (
-                    <Box
-                      key={color.name}
-                      onClick={() => setSelectedColor(color.name)}
-                      sx={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        backgroundColor: color.value,
-                        cursor: 'pointer',
-                        border: selectedColor === color.name ? '2px solid #fff' : '2px solid transparent',
-                        boxShadow: selectedColor === color.name ? '0 0 0 2px rgba(143, 211, 180, 0.5)' : 'none',
-                        transition: 'transform 0.2s ease',
-                        '&:hover': {
-                          transform: 'scale(1.1)'
-                        }
-                      }}
-                      title={color.name}
-                    />
-                  ))}
+                  {getFilteredOptions().colors.length > 0 ? (
+                    getFilteredOptions().colors.map((color) => (
+                      <Box
+                        key={color}
+                        onClick={() => handleColorChange(color)}
+                        sx={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          backgroundColor: getColorValue(color),
+                          cursor: 'pointer',
+                          border: selectedColor === color ? '2px solid #fff' : '2px solid transparent',
+                          boxShadow: selectedColor === color ? '0 0 0 2px rgba(143, 211, 180, 0.5)' : 'none',
+                          transition: 'transform 0.2s ease',
+                          '&:hover': {
+                            transform: 'scale(1.1)'
+                          }
+                        }}
+                        title={color}
+                      />
+                    ))
+                  ) : (
+                    <Typography sx={{ color: '#8FD3B4', fontStyle: 'italic' }}>
+                      No colors available in your wardrobe
+                    </Typography>
+                  )}
                 </Box>
               </Box>
 
@@ -341,104 +490,79 @@ const OutfitSuggestionComponent = () => {
               height: 'fit-content'
             }}>
               <Typography variant="h5" sx={{ fontSize: '18px', fontWeight: 500, marginBottom: '20px' }}>
-                Suggested Outfits
+                Suggested Items
               </Typography>
 
-              {outfits.length === 0 ? (
+              {!suggestions && !loading ? (
                 <Typography sx={{ 
                   color: 'rgba(255, 255, 255, 0.5)', 
                   textAlign: 'center', 
                   fontSize: '14px',
                   fontStyle: 'italic'
                 }}>
-                  No outfits generated yet. Select your preferences and click "Generate Outfit Suggestion"
+                  No suggestions generated yet. Select your preferences and click "Generate Outfit Suggestion"
                 </Typography>
-              ) : (
+              ) : suggestions && !loading ? (
                 <Box>
-                  {outfits.map((outfit, index) => (
-                    <Card key={index} sx={{ 
-                      background: 'rgba(30, 65, 50, 0.7)',
-                      borderRadius: '10px',
-                      marginBottom: '20px',
-                      border: '1px solid rgba(60, 120, 100, 0.4)'
-                    }}>
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                          <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 600 }}>
-                            {outfit.outfitTitle}
-                          </Typography>
-                          <Typography sx={{ color: '#FFD166', fontSize: '14px' }}>
-                            {'★'.repeat(outfit.styleRating || 4)}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
-                          {outfit.items?.map((item, itemIndex) => (
-                            <Box key={itemIndex} sx={{ flex: 1, textAlign: 'center' }}>
-                              <Box sx={{
-                                width: '60px',
-                                height: '60px',
-                                borderRadius: '8px',
-                                margin: '0 auto 8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '24px',
-                                backgroundColor: item.color || '#808080'
-                              }}>
-                                {getItemIcon(item.category)}
-                              </Box>
-                              <Typography sx={{ fontSize: '12px', color: '#8FD3B4' }}>
-                                {item.name}
-                              </Typography>
-                            </Box>
+                  {Object.entries(suggestions).map(([category, items]) => (
+                    <Box key={category} sx={{ marginBottom: '20px' }}>
+                      <Typography variant="h6" sx={{ 
+                        fontSize: '16px', 
+                        fontWeight: 600, 
+                        marginBottom: '10px',
+                        color: '#8FD3B4',
+                        textTransform: 'capitalize'
+                      }}>
+                        {category}
+                      </Typography>
+                      {items.length === 0 ? (
+                        <Typography sx={{ 
+                          color: 'rgba(255, 255, 255, 0.5)', 
+                          fontSize: '14px',
+                          fontStyle: 'italic',
+                          marginLeft: '10px'
+                        }}>
+                          No {category} found matching your criteria
+                        </Typography>
+                      ) : (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                          {items.map((item) => (
+                            <Card key={item._id} sx={{ 
+                              background: 'rgba(30, 65, 50, 0.7)',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(60, 120, 100, 0.4)',
+                              minWidth: '120px',
+                              maxWidth: '150px'
+                            }}>
+                              <CardContent sx={{ padding: '10px !important' }}>
+                                <Box sx={{ 
+                                  width: '60px', 
+                                  height: '60px', 
+                                  borderRadius: '5px', 
+                                  margin: '0 auto 8px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '24px',
+                                  backgroundColor: getColorValue(item.color) || '#808080'
+                                }}>
+                                  {getItemIcon(Array.isArray(item.category) ? item.category[0] : item.category)}
+                                </Box>
+                                <Typography sx={{ fontSize: '12px', color: '#fff', textAlign: 'center', marginBottom: '4px' }}>
+                                  {item.name}
+                                </Typography>
+                                <Typography sx={{ fontSize: '10px', color: '#8FD3B4', textAlign: 'center' }}>
+                                  {item.color} • {Array.isArray(item.style) ? item.style.join(', ') : (item.style || 'Any style')}
+                                </Typography>
+                              </CardContent>
+                            </Card>
                           ))}
                         </Box>
-
-                        <Typography sx={{ fontSize: '14px', color: '#8FD3B4', marginBottom: '15px' }}>
-                          {outfit.description}
-                        </Typography>
-
-                        <Box sx={{ display: 'flex', gap: '10px' }}>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => saveOutfit(outfit)}
-                            sx={{
-                              flex: 1,
-                              background: 'rgba(143, 211, 180, 0.2)',
-                              color: '#8FD3B4',
-                              border: '1px solid rgba(143, 211, 180, 0.4)',
-                              fontSize: '12px',
-                              '&:hover': {
-                                background: 'rgba(143, 211, 180, 0.3)'
-                              }
-                            }}
-                          >
-                            Save Outfit
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            sx={{
-                              flex: 1,
-                              background: 'rgba(255, 255, 255, 0.1)',
-                              color: '#fff',
-                              border: '1px solid rgba(255, 255, 255, 0.2)',
-                              fontSize: '12px',
-                              '&:hover': {
-                                background: 'rgba(255, 255, 255, 0.2)'
-                              }
-                            }}
-                          >
-                            Share
-                          </Button>
-                        </Box>
-                      </CardContent>
-                    </Card>
+                      )}
+                    </Box>
                   ))}
                 </Box>
-              )}
+              ) : null}
             </Paper>
           </Grid>
         </Grid>

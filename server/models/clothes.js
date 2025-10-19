@@ -21,7 +21,7 @@ const clothesSchema = new mongoose.Schema({
   },
   seasonType: { 
     type: [String], 
-    default: "",
+    default: [],
     enum: ['summer', 'winter', 'spring', 'fall', 'autumn', 'all-season']
   },
   color: { 
@@ -29,7 +29,7 @@ const clothesSchema = new mongoose.Schema({
     required: true 
   },
   style: { type: [String] }, // casual, formal, sporty, etc.
-  occasion: { type: String }, // work, party, casual, etc.
+  occasion: { type: [String] }, // work, party, casual, etc.
   weather: { type: String }, // summer, winter, spring, fall
   tags: [String],
   user: { type: String, default: "default" }, // Keep for backward compatibility
