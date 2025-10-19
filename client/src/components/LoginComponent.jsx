@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { useNavigate } from "react-router-dom";
 
 import {
   Avatar,
   Button,
   TextField,
-  Link,
   Paper,
   Box,
   Typography,
@@ -14,53 +14,61 @@ import {
   Divider,
   Container,
   CircularProgress,
+  Alert,
 } from "@mui/material";
-import { Messages } from "primereact/messages";
-import { redirect } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
-import { LoginService } from "../services/authServices";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 export default function LoginComponent() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loader, setLoader] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [failure, setFailure] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState({ text: "", type: "" });
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const showMessage = (text, type = "info") => {
+    setMessage({ text, type });
+  };
 
   const submitLogin = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!email.trim()) {
+      showMessage("Please enter your email address", "error");
+      return;
+    }
+    if (!password.trim()) {
+      showMessage("Please enter your password", "error");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      showMessage("Please enter a valid email address", "error");
+      return;
+    }
+    
+    setLoader(true);
+    
     try {
-      setLoader(true);
-      const response = await LoginService(username, password);
-
-      if (response.statusCode == "200") {
-        setLoader(false);
-        try {
-          localStorage.setItem("user", response.responseData.user);
-          localStorage.setItem("loggedIn", response.responseData.loggedIn);
-        } catch (error) {
-          console.log("erorr");
-        }
-        if (response.responseData.role) {
-          localStorage?.setItem("role", response.responseData.role);
-        }
-        setSuccess(true);
-        setMessage("Logged in successfully");
-
-        redirect("/");
+      const result = await login(email, password);
+      
+      if (result.success) {
+        showMessage("Login successful! Redirecting...", "success");
+        setTimeout(() => {
+          navigate("/account/dashboard");
+        }, 1000);
       } else {
-        setLoader(false);
-        setFailure(true);
-        setMessage("Login failed. Please check your credentials.");
+        showMessage(result.message || "Login failed. Please check your credentials.", "error");
       }
-      setUsername("");
-      setPassword("");
     } catch (error) {
+      showMessage("An unexpected error occurred. Please try again.", "error");
+    } finally {
       setLoader(false);
-      setFailure(true);
-      setMessage("Login failed. Please check your credentials.");
+      setEmail("");
+      setPassword("");
     }
   };
 
@@ -68,14 +76,11 @@ export default function LoginComponent() {
     const { name, value } = e.target;
 
     switch (name) {
-      case "username":
-        setUsername(value);
+      case "email":
+        setEmail(value);
         break;
       case "password":
         setPassword(value);
-        break;
-      case "ForgotPassUsername":
-        setForgotPassUsername(value);
         break;
       default:
         break;
@@ -83,6 +88,18 @@ export default function LoginComponent() {
   };
 
   const defaultTheme = createTheme({
+    palette: {
+      primary: {
+        main: '#00c389',
+        light: '#00e6a0',
+        dark: '#007a5f',
+      },
+      secondary: {
+        main: '#009e8f',
+        light: '#00b39f',
+        dark: '#004c3f',
+      },
+    },
     typography: {
       fontFamily:
         'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
@@ -143,7 +160,7 @@ export default function LoginComponent() {
                   alignItems: "center",
                 }}
               >
-                <Avatar sx={{ m: 1, bgcolor: "#878787" }}>
+                <Avatar sx={{ m: 1, bgcolor: "primary.main" }}>
                   <LockOutlinedIcon />
                 </Avatar>
                 <Typography
@@ -166,13 +183,13 @@ export default function LoginComponent() {
                   <TextField
                     margin="normal"
                     required
-                    id="username"
-                    label="Username"
-                    name="username"
-                    type="text"
+                    id="email"
+                    label="Email"
+                    name="email"
+                    type="email"
                     autoFocus
-                    autoComplete="username"
-                    value={username}
+                    autoComplete="email"
+                    value={email}
                     onChange={onChange}
                     sx={{ display: "flex" }}
                   />
@@ -192,39 +209,51 @@ export default function LoginComponent() {
                     type="submit"
                     fullWidth
                     variant="contained"
+                    disabled={loader}
                     sx={{
                       mt: 3,
                       mb: 2,
                       width: "100%",
                       display: "flex",
-                      backgroundColor: "#878787 !important",
-                      color: "#fff !important",
+                      backgroundColor: "primary.main",
+                      color: "#fff",
                       "&:hover": {
-                        backgroundColor: "#878787 !important",
+                        backgroundColor: "primary.dark",
+                      },
+                      "&:disabled": {
+                        backgroundColor: "secondary.main",
+                        color: "#fff",
                       },
                     }}
                   >
-                    Login
+                    {loader ? <CircularProgress size={24} color="inherit" /> : "Login"}
                   </Button>
-
-                  {success && <Messages severity="success" text={message} />}
-                  {failure && <Messages severity="error" text={message} />}
+                  
+                  {message.text && (
+                    <Alert 
+                      severity={message.type} 
+                      sx={{ mt: 2, mb: 2 }}
+                      onClose={() => setMessage({ text: "", type: "" })}
+                    >
+                      {message.text}
+                    </Alert>
+                  )}
                   <Divider variant="middle" sx={{ mb: 2, mt: 3 }} />
 
-                  <Link
-                    href="/signup"
-                    variant="body2"
-                    textAlign="center"
-                    sx={{
+                  <RouterLink
+                    to="/signup"
+                    style={{
+                      textDecoration: 'none',
                       fontWeight: 600,
-                      color: "#878787",
-                      "&:hover": {
-                        fontWeight: 500,
-                      },
+                      color: '#00c389',
+                      textAlign: 'center',
+                      display: 'block',
                     }}
                   >
-                    <p>Don&apos;t have an account? Signup</p>
-                  </Link>
+                    <p style={{ margin: 0, '&:hover': { color: '#007a5f' } }}>
+                      Don&apos;t have an account? Signup
+                    </p>
+                  </RouterLink>
                 </Box>
               </Box>
             </Box>

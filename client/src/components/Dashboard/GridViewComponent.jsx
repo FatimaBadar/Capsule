@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "primereact/button";
-import { Container, CircularProgress } from "@mui/material";
+import { Container, CircularProgress, Alert } from "@mui/material";
 import { DataView, DataViewLayoutOptions } from "primereact/dataview";
 import { getAllClothes } from "../../services/clothingService";
 import axios from "axios";
+import { useAuth } from "../../contexts/AuthContext.jsx";
+
 const API_URL = "http://localhost:3000/api/clothes";
 
 export default function GridViewComponent() {
@@ -11,6 +13,12 @@ export default function GridViewComponent() {
   const [clothes, setClothes] = useState([]);
   const [layout, setLayout] = useState("grid");
   const [imageBase64, setImageBase64] = useState("");
+  const [message, setMessage] = useState({ text: "", type: "" });
+  const { user } = useAuth();
+
+  const showMessage = (text, type = "info") => {
+    setMessage({ text, type });
+  };
 
   // const [clothes, setClothes] = useState([
   //   {
@@ -39,6 +47,7 @@ export default function GridViewComponent() {
         }
       } catch (err) {
         console.error("Failed to fetch clothes:", err);
+        showMessage("Failed to load wardrobe items. Please try again.", "error");
       } finally {
         setLoader(false);
       }
@@ -63,6 +72,21 @@ export default function GridViewComponent() {
     }
   };
 
+  const deleteItem = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this item?')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API_URL}/wardrobe/${id}`);
+      setClothes(clothes.filter(item => item._id !== id));
+      showMessage('Item deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      showMessage(error.response?.data?.message || 'Error deleting item', 'error');
+    }
+  };
+
   const gridItem = (item) => {
     return (
       <div className="col-12 sm:col-6 lg:col-12 xl:col-4 p-2" key={item._id}>
@@ -70,16 +94,31 @@ export default function GridViewComponent() {
           <div className="flex flex-wrap align-items-center justify-content-between gap-2">
             <div className="flex align-items-center gap-2">
               <i className="pi pi-tag"></i>
-              <span className="font-semibold">{item.category.toUpperCase()}</span>
+              <span className="font-semibold">
+                {item.category.toUpperCase()}
+              </span>
             </div>
+            <Button
+              icon="pi pi-trash"
+              className="p-button-danger p-button-sm"
+              onClick={() => deleteItem(item._id)}
+              tooltip="Delete item"
+              style={{ backgroundColor: '#dc3545', borderColor: '#dc3545' }}
+            />
           </div>
           <div className="flex flex-column align-items-center gap-3">
-               <img
-                src={item.imageBase64 ? item.imageBase64 : item.imageUrl} 
-                alt={item.title}
-                className="w-5 shadow-2 border-round"
-              /> 
-              <div className="text-2xl font-bold">{item.title}</div>
+            <img
+              src={item.imageBase64 ? item.imageBase64 : item.imageUrl}
+              alt={item.title}
+              className="w-5 shadow-2 border-round"
+            />
+            <div className="text-2xl font-bold">{item.title}</div>
+            {item.color && (
+              <div className="text-sm text-gray-600">Color: {item.color}</div>
+            )}
+            {item.style && (
+              <div className="text-sm text-gray-600">Style: {item.style}</div>
+            )}
           </div>
         </div>
       </div>
@@ -128,6 +167,23 @@ export default function GridViewComponent() {
             // header={header()}
           />
         </div>
+      )}
+      
+      {message.text && (
+        <Alert 
+          severity={message.type} 
+          sx={{ 
+            position: 'fixed', 
+            top: '80px', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            zIndex: 1000,
+            minWidth: '300px'
+          }}
+          onClose={() => setMessage({ text: "", type: "" })}
+        >
+          {message.text}
+        </Alert>
       )}
     </>
   );

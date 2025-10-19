@@ -26,15 +26,23 @@ const UploadComponent = ({ onOpenUpload }) => {
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [title, setTitle] = useState("");
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [fabric, setFabric] = useState("");
   const [category, setCategory] = useState("");
   const [seasonType, setSeasonType] = useState("");
   const [color, setColor] = useState("");
+  const [style, setStyle] = useState("");
+  const [customStyle, setCustomStyle] = useState("");
+  const [occasion, setOccasion] = useState("");
+  const [customOccasion, setCustomOccasion] = useState("");
+  // const [weather, setWeather] = useState("");
+  // const [tags, setTags] = useState("");
   const [loader, setLoader] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState({ text: "", type: "" });
+
   const [success, setSuccess] = useState(false);
   const [failure, setFailure] = useState(false);
 
@@ -64,20 +72,28 @@ const UploadComponent = ({ onOpenUpload }) => {
     setImageFile(null);
     setPreviewUrl("");
     setTitle("");
+    setName("");
     setDescription("");
     setFabric("");
     setCategory("");
     setSeasonType("");
     setColor("");
+    setStyle("");
+    setCustomStyle("");
+    setOccasion("");
+    setCustomOccasion("");
+    // setWeather("");
+    // setTags("");
     setAiAnalysis(null);
-    setSuccess(false);
-    setFailure(false);
-    setMessage("");
   };
 
   const closeUploadModal = () => {
     onOpenUpload(false);
     resetForm();
+  };
+
+  const showMessage = (text, type = "info") => {
+    setMessage({ text, type });
   };
 
   // Trigger AI analysis on file select
@@ -120,6 +136,9 @@ const UploadComponent = ({ onOpenUpload }) => {
         setFabric(aiItem.fabric || "");
         setColor(aiItem.color || "");
         setSeasonType(aiItem.seasonType || "");
+        setStyle(aiItem.style || "");
+        setOccasion(aiItem.occasion || "");
+        // setWeather(aiItem.weather || "");
 
         localStorage.setItem("newTempClothes", JSON.stringify(aiItem));
         localStorage.setItem("newTempClothesImage", JSON.stringify(imageFile));
@@ -138,9 +157,22 @@ const UploadComponent = ({ onOpenUpload }) => {
 
   const submitUploadClothes = async (e) => {
     e.preventDefault();
+    
+    // Validation
     if (!imageFile) {
-      setMessage("Please select an image file.");
-      setFailure(true);
+      showMessage("Please select an image file.", "error");
+      return;
+    }
+    if (!title.trim()) {
+      showMessage("Please enter a title for the item.", "error");
+      return;
+    }
+    if (!category) {
+      showMessage("Please select a category.", "error");
+      return;
+    }
+    if (!color.trim()) {
+      showMessage("Please enter a color.", "error");
       return;
     }
 
@@ -148,11 +180,16 @@ const UploadComponent = ({ onOpenUpload }) => {
     const formData = new FormData();
     formData.append("imageFile", imageFile);
     formData.append("title", title);
+    formData.append("name", name || title);
     formData.append("description", description);
     formData.append("fabric", fabric);
     formData.append("category", category);
     formData.append("seasonType", seasonType);
     formData.append("color", color);
+    formData.append("style", style === "other" ? customStyle : style);
+    formData.append("occasion", occasion === "other" ? customOccasion : occasion);
+    // formData.append("weather", weather);
+    // formData.append("tags", tags);
     formData.append("user", localStorage.getItem("user") || "default");
 
     try {
@@ -168,18 +205,19 @@ const UploadComponent = ({ onOpenUpload }) => {
         response.data.statusCode === "200" ||
         response.data.statusCode === 200
       ) {
-        setLoader(false);
-        setSuccess(true);
-        setMessage("New item successfully added!");
-        // setTimeout(() => closeUploadModal(), 2000);
-        // if (onUploadSuccess) onUploadSuccess(response.data.item);
-        // setTimeout(() => closeUploadModal(), 2000);
+        showMessage("New item successfully added!", "success");
+        resetForm();
+        if (onUploadSuccess) onUploadSuccess(response.data.item);
+        setTimeout(() => closeUploadModal(), 1500);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Upload error:", error);
+      showMessage(
+        error.response?.data?.message || "Could not add new item. Please try again.",
+        "error"
+      );
+    } finally {
       setLoader(false);
-      setFailure(true);
-      setMessage("Could not add new item. Please try again.");
     }
   };
 
@@ -188,6 +226,9 @@ const UploadComponent = ({ onOpenUpload }) => {
     switch (name) {
       case "title":
         setTitle(value);
+        break;
+      case "name":
+        setName(value);
         break;
       case "category":
         setCategory(value);
@@ -204,6 +245,24 @@ const UploadComponent = ({ onOpenUpload }) => {
       case "color":
         setColor(value);
         break;
+      case "style":
+        setStyle(value);
+        break;
+      case "customStyle":
+        setCustomStyle(value);
+        break;
+      case "occasion":
+        setOccasion(value);
+        break;
+      case "customOccasion":
+        setCustomOccasion(value);
+        break;
+      // case "weather":
+      //   setWeather(value);
+      //   break;
+      // case "tags":
+      //   setTags(value);
+      //   break;
       default:
         break;
     }
@@ -431,6 +490,112 @@ const UploadComponent = ({ onOpenUpload }) => {
                 // disabled={!imageFile || analyzing}
               />
 
+              <FormControl fullWidth variant="outlined" margin="normal">
+                <InputLabel>Style</InputLabel>
+                <Select
+                  name="style"
+                  value={style}
+                  onChange={onChange}
+                  id="style"
+                  label="Style"
+                  sx={{ display: "flex", textAlign: "left" }}
+                >
+                  <MenuItem value="">Select Style</MenuItem>
+                  <MenuItem value="casual">Casual</MenuItem>
+                  <MenuItem value="formal">Formal</MenuItem>
+                  <MenuItem value="sporty">Sporty</MenuItem>
+                  <MenuItem value="business">Business</MenuItem>
+                  <MenuItem value="elegant">Elegant</MenuItem>
+                  <MenuItem value="bohemian">Bohemian</MenuItem>
+                  <MenuItem value="vintage">Vintage</MenuItem>
+                  <MenuItem value="minimalist">Minimalist</MenuItem>
+                  <MenuItem value="streetwear">Streetwear</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+              </FormControl>
+
+              {style === "other" && (
+                <TextField
+                  margin="normal"
+                  name="customStyle"
+                  label="Custom Style"
+                  type="text"
+                  value={customStyle}
+                  onChange={onChange}
+                  placeholder="Enter custom style"
+                  sx={{ display: "flex" }}
+                />
+              )}
+
+              <FormControl fullWidth variant="outlined" margin="normal">
+                <InputLabel>Occasion</InputLabel>
+                <Select
+                  name="occasion"
+                  value={occasion}
+                  onChange={onChange}
+                  id="occasion"
+                  label="Occasion"
+                  sx={{ display: "flex", textAlign: "left" }}
+                >
+                  <MenuItem value="">Select Occasion</MenuItem>
+                  <MenuItem value="work">Work</MenuItem>
+                  <MenuItem value="party">Party</MenuItem>
+                  <MenuItem value="casual">Casual</MenuItem>
+                  <MenuItem value="formal">Formal</MenuItem>
+                  <MenuItem value="date">Date</MenuItem>
+                  <MenuItem value="gym">Gym</MenuItem>
+                  <MenuItem value="travel">Travel</MenuItem>
+                  <MenuItem value="wedding">Wedding</MenuItem>
+                  <MenuItem value="interview">Interview</MenuItem>
+                  <MenuItem value="dinner">Dinner</MenuItem>
+                  <MenuItem value="shopping">Shopping</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+              </FormControl>
+
+              {occasion === "other" && (
+                <TextField
+                  margin="normal"
+                  name="customOccasion"
+                  label="Custom Occasion"
+                  type="text"
+                  value={customOccasion}
+                  onChange={onChange}
+                  placeholder="Enter custom occasion"
+                  sx={{ display: "flex" }}
+                />
+              )}
+
+             {/* <FormControl fullWidth variant="outlined" margin="normal">
+                 <InputLabel>Weather</InputLabel>
+                <Select
+                  name="weather"
+                  value={weather}
+                  onChange={onChange}
+                  id="weather"
+                  label="Weather"
+                  sx={{ display: "flex", textAlign: "left" }}
+                >
+                  <MenuItem value="">Any Weather</MenuItem>
+                  <MenuItem value="summer">Summer</MenuItem>
+                  <MenuItem value="winter">Winter</MenuItem>
+                  <MenuItem value="spring">Spring</MenuItem>
+                  <MenuItem value="fall">Fall</MenuItem>
+                </Select>
+              </FormControl> */}
+
+              {/* <TextField
+                margin="normal"
+                name="tags"
+                label="Tags (Optional)"
+                type="text"
+                value={tags}
+                onChange={onChange}
+                placeholder="e.g., vintage, trendy, comfortable (comma separated)"
+                helperText="Add descriptive tags to help with outfit suggestions and search"
+                sx={{ display: "flex" }}
+              /> */}
+
               <Button
                 type="submit"
                 fullWidth
@@ -441,22 +606,32 @@ const UploadComponent = ({ onOpenUpload }) => {
                   p: 1.2,
                   width: "100%",
                   display: "flex",
-                  backgroundColor: "#878787 !important",
-                  color: "#fff !important",
+                  backgroundColor: "#00c389",
+                  color: "#fff",
                   "&:hover": {
-                    backgroundColor: "#878787 !important",
+                    backgroundColor: "#007a5f",
+                  },
+                  "&:disabled": {
+                    backgroundColor: "#009e8f",
+                    color: "#fff",
                   },
                 }}
-                // disabled={!imageFile || analyzing}
+                disabled={!imageFile || analyzing}
               >
                 {analyzing
                   ? "🔄 Analyzing with AI..."
-                  : // : aiAnalysis
-                    // ? "✅ Already Saved!"
-                    "💾 Save to Wardrobe"}
+                  : "💾 Save to Wardrobe"}
               </Button>
-              {success && <Messages severity="success" text={message} />}
-              {failure && <Messages severity="error" text={message} />}
+              
+              {message.text && (
+                <Alert 
+                  severity={message.type} 
+                  sx={{ mt: 2, mb: 2 }}
+                  onClose={() => setMessage({ text: "", type: "" })}
+                >
+                  {message.text}
+                </Alert>
+              )}
             </Box>
           </Box>
           {/* </Box> */}

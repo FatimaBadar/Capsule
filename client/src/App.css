@@ -79,11 +79,13 @@ body {
   background-color: var(--color-light);
 }
 
-
-button, .p-button{
+button,
+.p-button {
   font-family: var(--font-primary);
   font-weight: 600;
-  background-color: #878787;
+  background-color: white;
+  color:cadetblue;
+  /* background-color: #878787; */
 }
 
 .p-toast {
@@ -140,7 +142,7 @@ button, .p-button{
   /* background-color: #3F51B5; */
   /* color: #3F51B5; */
   /* background-color: black; */
-  background-color: #f6f6f6;
+  /* background-color: #f6f6f6; */
 
   /* background-color: transparent; */
 }
@@ -187,7 +189,7 @@ button, .p-button{
   .p-menuitem-link
   .p-menuitem-icon {
   /* color: #FB6FBB; */
-  color: #f6f6f6;
-  background: #8787874f;
+  /* color: #f6f6f6; */
+  /* background: #8787874f; */
 }
 /*#endregion Navbar */

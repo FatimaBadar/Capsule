@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { useNavigate } from "react-router-dom";
 import {
   Avatar,
   Button,
   TextField,
-  Link,
   Paper,
   Box,
   Typography,
@@ -13,60 +13,75 @@ import {
   Divider,
   Container,
   CircularProgress,
+  Alert,
 } from "@mui/material";
-import { Messages } from 'primereact/messages';
+import { Link as RouterLink } from "react-router-dom";
 
-import { signupService } from "../services/authServices";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 const Signup = () => {
-  const [firstname, setFirstname] = useState("");
-  const [lastname, setLastname] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loader, setLoader] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [failure, setFailure] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState({ text: "", type: "" });
+
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const showMessage = (text, type = "info") => {
+    setMessage({ text, type });
+  };
 
   const submitSignup = async (e) => {
     e.preventDefault();
-    const tempUser = {
-      firstname,
-      lastname,
-      username,
-      email,
-      password,
-    };
+    
+    // Basic validation
+    if (!username.trim()) {
+      showMessage("Please enter a username", "error");
+      return;
+    }
+    if (username.trim().length < 3) {
+      showMessage("Username must be at least 3 characters long", "error");
+      return;
+    }
+    if (!email.trim()) {
+      showMessage("Please enter your email address", "error");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      showMessage("Please enter a valid email address", "error");
+      return;
+    }
+    if (!password.trim()) {
+      showMessage("Please enter a password", "error");
+      return;
+    }
+    if (password.trim().length < 6) {
+      showMessage("Password must be at least 6 characters long", "error");
+      return;
+    }
+    
+    setLoader(true);
 
     try {
-      setLoader(true);
+      const result = await register(username, email, password);
 
-      const response = await signupService(tempUser);
-
-      if (response.statusCode == "200") {
-        setLoader(false);
-        setSuccess(true);
-        setMessage("You have successfully signed up!");
-        
+      if (result.success) {
+        showMessage("Registration successful! Redirecting...", "success");
+        setTimeout(() => {
+          navigate("/account/dashboard");
+        }, 1000);
       } else {
-        setLoader(false);
-        setFailure(true);
-        setMessage("Registration failed. Please check your credentials..");
+        showMessage(result.message || "Registration failed. Please check your credentials.", "error");
       }
-
-      setFirstname("");
-      setLastname("");
+    } catch (error) {
+      showMessage("An unexpected error occurred. Please try again.", "error");
+    } finally {
+      setLoader(false);
       setUsername("");
       setEmail("");
       setPassword("");
-
-      redirect("/");
-    } catch (error) {
-      setLoader(false);
-      setFailure(true);
-      setMessage("Registration failed. Please check your credentials..");
     }
   };
 
@@ -74,12 +89,6 @@ const Signup = () => {
     const { name, value } = e.target;
 
     switch (name) {
-      case "firstname":
-        setFirstname(value);
-        break;
-      case "lastname":
-        setLastname(value);
-        break;
       case "username":
         setUsername(value);
         break;
@@ -95,6 +104,18 @@ const Signup = () => {
   };
 
   const defaultTheme = createTheme({
+    palette: {
+      primary: {
+        main: '#00c389',
+        light: '#00e6a0',
+        dark: '#007a5f',
+      },
+      secondary: {
+        main: '#009e8f',
+        light: '#00b39f',
+        dark: '#004c3f',
+      },
+    },
     typography: {
       fontFamily:
         'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
@@ -155,7 +176,7 @@ const Signup = () => {
                   alignItems: "center",
                 }}
               >
-                <Avatar sx={{ m: 1, bgcolor: "#878787" }}>
+                <Avatar sx={{ m: 1, bgcolor: "primary.main" }}>
                   <LockOutlinedIcon />
                 </Avatar>
                 <Typography
@@ -174,35 +195,6 @@ const Signup = () => {
                     textAlign: "center",
                   }}
                 >
-                  <TextField
-                    margin="normal"
-                    required
-                    id="firstname"
-                    label="First Name"
-                    name="firstname"
-                    type="text"
-                    variant="outlined"
-                    autoFocus
-                    autoComplete="username"
-                    value={firstname}
-                    onChange={onChange}
-                    sx={{ display: "flex" }}
-                    // focused
-                  />
-                  <TextField
-                    margin="normal"
-                    required
-                    id="lastname"
-                    label="Last Name"
-                    name="lastname"
-                    type="text"
-                    autoFocus
-                    autoComplete="username"
-                    value={lastname}
-                    onChange={onChange}
-                    sx={{ display: "flex" }}
-                    // focused
-                  />
                   <TextField
                     margin="normal"
                     required
@@ -251,39 +243,51 @@ const Signup = () => {
                     type="submit"
                     fullWidth
                     variant="contained"
+                    disabled={loader}
                     sx={{
                       mt: 3,
                       mb: 2,
                       width: "100%",
                       display: "flex",
-                      backgroundColor: "#878787 !important",
-                      color: "#fff !important",
+                      backgroundColor: "primary.main",
+                      color: "#fff",
                       "&:hover": {
-                        backgroundColor: "#878787 !important",
+                        backgroundColor: "primary.dark",
+                      },
+                      "&:disabled": {
+                        backgroundColor: "secondary.main",
+                        color: "#fff",
                       },
                     }}
                   >
-                    Sign Up
+                    {loader ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
                   </Button>
-
-                  {success && <Messages severity="success" text={message} />}
-                  {failure && <Messages severity="error" text={message} />}
+                  
+                  {message.text && (
+                    <Alert 
+                      severity={message.type} 
+                      sx={{ mt: 2, mb: 2 }}
+                      onClose={() => setMessage({ text: "", type: "" })}
+                    >
+                      {message.text}
+                    </Alert>
+                  )}
                   <Divider variant="middle" sx={{ mb: 2, mt: 3 }} />
 
-                  <Link
-                    href="/login"
-                    variant="body2"
-                    textAlign="center"
-                    sx={{
+                  <RouterLink
+                    to="/login"
+                    style={{
+                      textDecoration: 'none',
                       fontWeight: 600,
-                      color: "#878787",
-                      "&:hover": {
-                        fontWeight: 500,
-                      },
+                      color: '#00c389',
+                      textAlign: 'center',
+                      display: 'block',
                     }}
                   >
-                    <p>Already have an account? Login</p>
-                  </Link>
+                    <p style={{ margin: 0, '&:hover': { color: '#007a5f' } }}>
+                      Already have an account? Login
+                    </p>
+                  </RouterLink>
                 </Box>
               </Box>
             </Box>

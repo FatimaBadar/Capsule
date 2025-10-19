@@ -1,10 +1,14 @@
 import React from 'react'
-import GenerateOutfitsComponent from '../components/GenerateOutfitsComponent'
+import SuggestionsComponent from '../components/SuggestionsComponent'
+// import GenerateOutfitsComponent from '../components/GenerateOutfitsComponent'
 
 export default function Outfits() {
   return (
     <>
-          <GenerateOutfitsComponent />
+      <SuggestionsComponent />
+      {/* <div style={{ marginTop: '2rem' }}>
+        <GenerateOutfitsComponent />
+      </div> */}
     </>
-    )
+  )
 }

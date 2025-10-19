@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import bodyParser from 'body-parser';
 // import requirementsRouter from './api/requirements.js';
 import clothesRouter from './api/clothes.js';
+import authRouter from './api/auth.js';
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -43,6 +44,7 @@ const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API routes
+app.use('/api/auth', authRouter);
 app.use('/api/clothes', clothesRouter);
 
 // app.use('/api/ui', uiRouter);

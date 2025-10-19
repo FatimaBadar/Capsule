@@ -55,7 +55,9 @@ export default function GenerateOutfitsComponent() {
         outfits.map((outfit, index) => (
           <div key={index} className="outfit-card p-2 shadow rounded">
             <img
-              src={outfit.imageUrl} // make sure your API returns full accessible URL
+                            src={outfit.imageBase64 ? outfit.imageBase64 : outfit.imageUrl} 
+
+              // src={outfit.imageUrl} // make sure your API returns full accessible URL
               alt={outfit.title || `Outfit ${index + 1}`}
               className="w-full h-48 object-cover rounded"
             />

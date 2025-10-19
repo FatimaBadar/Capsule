@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Suggestion - Capsule</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #0A1F17; /* Darkest phthalo green */
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            gap: 40px;
+        }
+
+        .form-section {
+            flex: 1;
+            background: rgba(18, 42, 33, 0.9);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(40, 90, 70, 0.3);
+        }
+
+        .results-section {
+            flex: 1;
+            background: rgba(18, 42, 33, 0.9);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(40, 90, 70, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .subtitle {
+            color: #8FD3B4;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .weather-info {
+            background: rgba(30, 65, 50, 0.7);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .weather-icon {
+            font-size: 24px;
+        }
+
+        .weather-details h3 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .weather-details p {
+            color: #8FD3B4;
+            font-size: 14px;
+        }
+
+        .loading {
+            color: #8FD3B4;
+            font-style: italic;
+        }
+
+        hr {
+            border: none;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 24px 0;
+        }
+
+        .preference-group {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .preference-label {
+            color: #8FD3B4;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .style-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .style-option {
+            background: rgba(30, 65, 50, 0.7);
+            border: 1px solid rgba(60, 120, 100, 0.4);
+            border-radius: 8px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .style-option:hover {
+            background: rgba(40, 85, 65, 0.8);
+        }
+
+        .style-option.selected {
+            background: rgba(50, 110, 85, 0.9);
+            border-color: #8FD3B4;
+        }
+
+        .color-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .color-option {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: #fff;
+            box-shadow: 0 0 0 2px rgba(143, 211, 180, 0.5);
+        }
+
+        .generate-btn {
+            background: #8FD3B4;
+            color: #0A1F17;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .generate-btn:hover {
+            background: #9FE3C4;
+            transform: translateY(-2px);
+        }
+
+        .results-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .outfit-result {
+            background: rgba(30, 65, 50, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(60, 120, 100, 0.4);
+        }
+
+        .outfit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .outfit-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .outfit-rating {
+            color: #FFD166;
+            font-size: 14px;
+        }
+
+        .outfit-items {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .outfit-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .item-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .item-name {
+            font-size: 12px;
+            color: #8FD3B4;
+        }
+
+        .outfit-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .save-btn {
+            background: rgba(143, 211, 180, 0.2);
+            color: #8FD3B4;
+            border: 1px solid rgba(143, 211, 180, 0.4);
+        }
+
+        .save-btn:hover {
+            background: rgba(143, 211, 180, 0.3);
+        }
+
+        .share-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .share-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .outfit-history {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .history-item {
+            background: rgba(30, 65, 50, 0.7);
+            border-radius: 8px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(60, 120, 100, 0.4);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+            background: rgba(40, 85, 65, 0.8);
+        }
+
+        .placeholder-text {
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-section">
+            <h1>Create New Suggestion</h1>
+            <p class="subtitle">Set your preferences to generate a personalized outfit</p>
+            
+            <div class="weather-info">
+                <div class="weather-icon">⏳</div>
+                <div class="weather-details">
+                    <h3>Current Weather - Auckland</h3>
+                    <p class="loading" id="weather-loading">Loading weather data...</p>
+                    <p id="weather-data" class="hidden"></p>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="preference-group">
+                <h2>Style Preference</h2>
+                <p class="preference-label">Select a style</p>
+                <div class="style-options">
+                    <div class="style-option">Casual</div>
+                    <div class="style-option">Business</div>
+                    <div class="style-option">Athletic</div>
+                    <div class="style-option">Evening</div>
+                    <div class="style-option">Beach</div>
+                    <div class="style-option">Formal</div>
+                    <div class="style-option">Streetwear</div>
+                    <div class="style-option">Minimalist</div>
+                </div>
+            </div>
+            
+            <div class="preference-group">
+                <h2>Color Preference</h2>
+                <p class="preference-label">Select a color</p>
+                <div class="color-options">
+                    <!-- Basic Colors -->
+                    <div class="color-option" style="background-color: #000000;" title="Black"></div>
+                    <div class="color-option" style="background-color: #FFFFFF;" title="White"></div>
+                    <div class="color-option" style="background-color: #808080;" title="Gray"></div>
+                    <div class="color-option" style="background-color: #964B00;" title="Brown"></div>
+                    <div class="color-option" style="background-color: #0000FF;" title="Blue"></div>
+                    <div class="color-option" style="background-color: #FF0000;" title="Red"></div>
+                    <div class="color-option" style="background-color: #008000;" title="Green"></div>
+                    <div class="color-option" style="background-color: #FFFF00;" title="Yellow"></div>
+                    <div class="color-option" style="background-color: #800080;" title="Purple"></div>
+                    <div class="color-option" style="background-color: #FFA500;" title="Orange"></div>
+                    <div class="color-option" style="background-color: #FFC0CB;" title="Pink"></div>
+                    <div class="color-option" style="background-color: #A52A2A;" title="Maroon"></div>
+                    <div class="color-option" style="background-color: #00FFFF;" title="Cyan"></div>
+                    <div class="color-option" style="background-color: #4B0082;" title="Indigo"></div>
+                    <div class="color-option" style="background-color: #FFD700;" title="Gold"></div>
+                    <div class="color-option" style="background-color: #C0C0C0;" title="Silver"></div>
+                    <div class="color-option" style="background-color: #8B4513;" title="Saddle Brown"></div>
+                    <div class="color-option" style="background-color: #2F4F4F;" title="Dark Slate Gray"></div>
+                    <div class="color-option" style="background-color: #DC143C;" title="Crimson"></div>
+                    <div class="color-option" style="background-color: #00FF00;" title="Lime"></div>
+                </div>
+            </div>
+            
+            <button class="generate-btn">Generate Outfit Suggestion</button>
+        </div>
+        
+        <div class="results-section">
+            <h2 class="results-title">Suggested Outfits</h2>
+            
+            <div id="outfit-results">
+                <!-- Outfit results will be generated here -->
+                <div class="placeholder-text" id="no-results">No outfits generated yet. Select your preferences and click "Generate Outfit Suggestion"</div>
+            </div>
+            
+            <h2 class="history-title">Your Outfit History</h2>
+            <div class="outfit-history">
+                <div class="history-item">
+                    <div class="placeholder-text">No outfits yet</div>
+                </div>
+                <div class="history-item">
+                    <div class="placeholder-text">Generate your first outfit</div>
+                </div>
+                <div class="history-item">
+                    <div class="placeholder-text">Outfit will appear here</div>
+                </div>
+                <div class="history-item">
+                    <div class="placeholder-text">Try different styles</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Style preference selection
+        const styleOptions = document.querySelectorAll('.style-option');
+        styleOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                styleOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        });
+
+        // Color preference selection
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                colorOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        });
+
+        // Weather data fetching for Auckland
+        async function fetchWeatherData() {
+            try {
+                // Using OpenWeatherMap API for Auckland, New Zealand
+                // Note: In production, you would need to sign up for an API key
+                const apiKey = 'demo_key'; // Replace with actual API key
+                const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Auckland,NZ&units=metric&appid=${apiKey}`);
+                
+                if (!response.ok) {
+                    throw new Error('Weather API not available');
+                }
+                
+                const data = await response.json();
+                return {
+                    temperature: Math.round(data.main.temp),
+                    description: data.weather[0].description,
+                    icon: getWeatherIcon(data.weather[0].main)
+                };
+            } catch (error) {
+                console.log('Using fallback weather data for Auckland');
+                // Fallback data for Auckland (typical spring weather)
+                return {
+                    temperature: 18,
+                    description: 'Partly Cloudy',
+                    icon: '⛅'
+                };
+            }
+        }
+
+        function getWeatherIcon(condition) {
+            const icons = {
+                'Clear': '☀️',
+                'Clouds': '☁️',
+                'Rain': '🌧️',
+                'Drizzle': '🌦️',
+                'Thunderstorm': '⛈️',
+                'Snow': '❄️',
+                'Mist': '🌫️',
+                'Fog': '🌫️',
+                'Haze': '🌫️'
+            };
+            return icons[condition] || '🌤️';
+        }
+
+        // Initialize weather data
+        async function initWeather() {
+            const weatherData = await fetchWeatherData();
+            const weatherElement = document.getElementById('weather-data');
+            const loadingElement = document.getElementById('weather-loading');
+            
+            loadingElement.classList.add('hidden');
+            weatherElement.classList.remove('hidden');
+            weatherElement.textContent = `${weatherData.description}, ${weatherData.temperature}°C`;
+            
+            // Update weather icon
+            document.querySelector('.weather-icon').textContent = weatherData.icon;
+        }
+
+        // Call weather initialization
+        initWeather();
+
+        // Expanded outfit data with more options
+        const outfitData = {
+            casual: [
+                {
+                    title: "Weekend Casual",
+                    rating: "★★★★☆",
+                    items: [
+                        { icon: "👕", color: "#000000", name: "Black Tee" },
+                        { icon: "👖", color: "#808080", name: "Gray Jeans" },
+                        { icon: "👟", color: "#FFFFFF", name: "White Sneakers" }
+                    ]
+                },
+                {
+                    title: "Comfort Day",
+                    rating: "★★★☆☆",
+                    items: [
+                        { icon: "🧥", color: "#964B00", name: "Brown Hoodie" },
+                        { icon: "🩳", color: "#000000", name: "Black Shorts" },
+                        { icon: "👟", color: "#808080", name: "Gray Running Shoes" }
+                    ]
+                }
+            ],
+            business: [
+                {
+                    title: "Professional Meeting",
+                    rating: "★★★★★",
+                    items: [
+                        { icon: "👔", color: "#000000", name: "Black Shirt" },
+                        { icon: "👖", color: "#2F4F4F", name: "Charcoal Pants" },
+                        { icon: "👞", color: "#000000", name: "Black Leather Shoes" }
+                    ]
+                },
+                {
+                    title: "Business Casual",
+                    rating: "★★★★☆",
+                    items: [
+                        { icon: "👕", color: "#FFFFFF", name: "White Polo" },
+                        { icon: "👖", color: "#964B00", name: "Khaki Pants" },
+                        { icon: "👞", color: "#8B4513", name: "Brown Loafers" }
+                    ]
+                }
+            ],
+            athletic: [
+                {
+                    title: "Morning Run",
+                    rating: "★★★★☆",
+                    items: [
+                        { icon: "👕", color: "#FF0000", name: "Red Performance Tee" },
+                        { icon: "🩳", color: "#000000", name: "Black Shorts" },
+                        { icon: "👟", color: "#FFFFFF", name: "White Running Shoes" }
+                    ]
+                },
+                {
+                    title: "Gym Session",
+                    rating: "★★★☆☆",
+                    items: [
+                        { icon: "👕", color: "#0000FF", name: "Blue Tank Top" },
+                        { icon: "🩳", color: "#808080", name: "Gray Shorts" },
+                        { icon: "👟", color: "#FF0000", name: "Red Cross-Trainers" }
+                    ]
+                }
+            ],
+            evening: [
+                {
+                    title: "Night Out",
+                    rating: "★★★★☆",
+                    items: [
+                        { icon: "👔", color: "#800080", name: "Purple Button-Up" },
+                        { icon: "👖", color: "#000000", name: "Black Jeans" },
+                        { icon: "👞", color: "#FFFFFF", name: "White Dress Shoes" }
+                    ]
+                },
+                {
+                    title: "Date Night",
+                    rating: "★★★★★",
+                    items: [
+                        { icon: "👔", color: "#DC143C", name: "Crimson Shirt" },
+                        { icon: "👖", color: "#2F4F4F", name: "Dark Gray Pants" },
+                        { icon: "👞", color: "#000000", name: "Black Designer Shoes" }
+                    ]
+                }
+            ],
+            beach: [
+                {
+                    title: "Beach Day",
+                    rating: "★★★☆☆",
+                    items: [
+                        { icon: "🩳", color: "#00FFFF", name: "Cyan Swim Trunks" },
+                        { icon: "👕", color: "#FFA500", name: "Orange Tank Top" },
+                        { icon: "👡", color: "#FFD700", name: "Gold Sandals" }
+                    ]
+                }
+            ],
+            formal: [
+                {
+                    title: "Black Tie Event",
+                    rating: "★★★★★",
+                    items: [
+                        { icon: "🎩", color: "#000000", name: "Black Tuxedo" },
+                        { icon: "👔", color: "#FFFFFF", name: "White Bow Tie" },
+                        { icon: "👞", color: "#000000", name: "Black Oxfords" }
+                    ]
+                }
+            ],
+            streetwear: [
+                {
+                    title: "Urban Style",
+                    rating: "★★★★☆",
+                    items: [
+                        { icon: "👕", color: "#FF0000", name: "Red Oversized Tee" },
+                        { icon: "👖", color: "#000000", name: "Black Joggers" },
+                        { icon: "👟", color: "#FFFFFF", name: "White Limited Sneakers" }
+                    ]
+                }
+            ],
+            minimalist: [
+                {
+                    title: "Simple & Clean",
+                    rating: "★★★★☆",
+                    items: [
+                        { icon: "👕", color: "#FFFFFF", name: "White Tee" },
+                        { icon: "👖", color: "#000000", name: "Black Jeans" },
+                        { icon: "👟", color: "#FFFFFF", name: "White Sneakers" }
+                    ]
+                }
+            ]
+        };
+
+        // Generate outfit button functionality
+        const generateBtn = document.querySelector('.generate-btn');
+        const resultsContainer = document.getElementById('outfit-results');
+        const noResultsMessage = document.getElementById('no-results');
+        
+        generateBtn.addEventListener('click', () => {
+            const selectedStyle = document.querySelector('.style-option.selected');
+            const selectedColor = document.querySelector('.color-option.selected');
+            
+            if (!selectedStyle || !selectedColor) {
+                alert('Please select both a style and color preference before generating an outfit.');
+                return;
+            }
+            
+            // Hide the "no results" message
+            noResultsMessage.style.display = 'none';
+            
+            // Clear previous results
+            const previousResults = document.querySelectorAll('.outfit-result');
+            previousResults.forEach(result => result.remove());
+            
+            // Get the selected style
+            const style = selectedStyle.textContent.toLowerCase();
+            
+            // Generate outfits based on selected style
+            if (outfitData[style]) {
+                outfitData[style].forEach(outfit => {
+                    // Create outfit element
+                    const outfitElement = document.createElement('div');
+                    outfitElement.className = 'outfit-result';
+                    
+                    // Create outfit HTML
+                    outfitElement.innerHTML = `
+                        <div class="outfit-header">
+                            <div class="outfit-title">${outfit.title}</div>
+                            <div class="outfit-rating">${outfit.rating}</div>
+                        </div>
+                        <div class="outfit-items">
+                            ${outfit.items.map(item => `
+                                <div class="outfit-item">
+                                    <div class="item-icon" style="background-color: ${item.color};">${item.icon}</div>
+                                    <div class="item-name">${item.name}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="outfit-actions">
+                            <button class="action-btn save-btn">Save Outfit</button>
+                            <button class="action-btn share-btn">Share</button>
+                        </div>
+                    `;
+                    
+                    // Add save functionality
+                    const saveBtn = outfitElement.querySelector('.save-btn');
+                    saveBtn.addEventListener('click', function() {
+                        alert(`Saved "${outfit.title}" to your outfit history!`);
+                        this.textContent = 'Saved!';
+                        this.disabled = true;
+                    });
+                    
+                    // Add share functionality
+                    const shareBtn = outfitElement.querySelector('.share-btn');
+                    shareBtn.addEventListener('click', function() {
+                        alert(`Sharing "${outfit.title}" outfit!`);
+                    });
+                    
+                    // Add to results container
+                    resultsContainer.appendChild(outfitElement);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
