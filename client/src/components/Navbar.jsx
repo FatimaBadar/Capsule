@@ -97,12 +97,12 @@ export default function Navbar() {
       command: () => handleNavigation("/profile"),
       visible: !!user,
     },
-    {
-      label: "Outfits",
-      icon: "pi pi-heart",
-      command: () => handleNavigation("/outfits"),
-      visible: !!user,
-    },
+    // {
+    //   label: "Outfits",
+    //   icon: "pi pi-heart",
+    //   command: () => handleNavigation("/outfits"),
+    //   visible: !!user,
+    // },
     {
       label: "Outfit Suggestion",
       icon: "pi pi-magic-wand",
